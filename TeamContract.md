@@ -84,6 +84,6 @@ Aryan Pournajafian
 
 Arian Mahlooji
 
-Thi Vinh Duy Nguyen
+Thi Vinh Duy (Alice) Nguyen
 
 Hai Yen(Ivy) Mai
