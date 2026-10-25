@@ -22,3 +22,25 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# Maven
+target/
+
+# Fixture generator output
+tools/logisim/build/
+
+# IntelliJ
+.idea/
+*.iml
+out/
+
+# macOS
+.DS_Store
+
+# App data and secrets
+data/
+.env
+config.properties
+
+# Project spec (local copy only)
+docs/LogiCoach_Project_Spec.pdf
