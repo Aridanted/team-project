@@ -32,7 +32,7 @@ The scripts live in `tools/logisim/` (`JAR` is the Logisim-evolution jar, for ex
 
 ```bash
 cd tools/logisim
-python3 gen.py                                   # writes source files to build/
+java GenerateFixtures.java                       # writes source files to build/
 javac -cp "$JAR" Normalize.java Probe.java
 java -Djava.awt.headless=true -cp "$JAR:." Normalize build/half_adder.circ ../../src/test/resources/circuits/half_adder.circ
 java -Djava.awt.headless=true -jar "$JAR" -t table ../../src/test/resources/circuits/half_adder.circ \
