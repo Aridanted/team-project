@@ -1,28 +1,28 @@
 # LogiCoach
 
 A Java Swing app that imports Logisim-evolution circuits (`.circ`), checks them against a truth
-table, gives Socratic AI hints (with an offline fallback) and tracks practice progress.
-It is a tutor and checker: it does not solve graded labs.
+table, offers an AI tutor chat that guides without giving answers, and builds practice circuits
+from plain-English descriptions. It is a learning tool: it does not solve graded labs.
 
 ## Team
 
-| Member | GitHub | Use case |
-|--------|--------|----------|
-| A `<name>` | `@<user>` | UC1 import and view a circuit |
-| B `<name>` | `@<user>` | UC2 check against a truth table |
-| C `<name>` | `@<user>` | UC3 get a hint |
-| D `<name>` | `@<user>` | UC4 practice problems and progress |
+| Member | GitHub | Responsibility |
+|--------|--------|----------------|
+| 1 `<name>` | `@<user>` | Open and check circuits (parser, simulator, checker) |
+| 2 `<name>` | `@<user>` | AI connection, circuit JSON format, Swing UI, AI settings |
+| 3 `<name>` | `@<user>` | AI tutor chat |
+| 4 `<name>` | `@<user>` | AI circuit builder |
 
 ## User stories
 
-- **US1 (A):** As a student, I want to open a Logisim `.circ` file and see its components, pins
-  and connections, so that I can confirm LogiCoach understood my circuit.
-- **US2 (B):** As a student, I want to enter an expected truth table and see which rows of my
-  circuit pass or fail, so that I can find where my circuit is wrong.
-- **US3 (C):** As a student with a failing circuit, I want graduated hints that nudge me without
-  giving the answer, so that I learn to fix it myself.
-- **US4 (D):** As a student, I want practice problems on a topic and a record of my attempts, so
-  that I can see my progress over time.
+- **US1 (1):** As a student, I want to open a Logisim `.circ` file and check it against the truth
+  table I expect, so that I can see exactly which rows of my circuit are wrong.
+- **US2 (2):** As a student, I want to enter my AI API key once and test the connection, so that
+  the AI features work without setup every time.
+- **US3 (3):** As a student with a failing circuit, I want to chat with a tutor that knows my
+  circuit and nudges me without giving the answer, so that I learn to fix it myself.
+- **US4 (4):** As a student, I want to describe a circuit in plain English and get a working
+  circuit I can open in Logisim, so that I can study how it is built.
 
 ## Requirements
 
