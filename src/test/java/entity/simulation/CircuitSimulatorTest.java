@@ -94,6 +94,17 @@ class CircuitSimulatorTest {
     }
 
     @Test
+    void gateFeedingItselfIsAFeedbackLoop() {
+        Circuit circuit = CircuitTestFactory.builder("self loop")
+                .input("A")
+                .gate("g", GateType.OR, "A", "g")
+                .output("Y", "g")
+                .build();
+        assertThrows(NotSimulatableException.class,
+                () -> simulator.evaluate(circuit, Map.of("A", Logic.ONE)));
+    }
+
+    @Test
     void unsupportedComponentThrows() {
         Circuit circuit = CircuitTestFactory.builder("bad")
                 .input("A")

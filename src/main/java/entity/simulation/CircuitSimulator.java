@@ -72,7 +72,7 @@ public final class CircuitSimulator implements CircuitEvaluator {
         for (int i = 0; i < gates.size(); i++) {
             for (int net : gates.get(i).inputNets()) {
                 Integer source = netToGateIndex.get(net);
-                if (source != null && source != i) {
+                if (source != null) {
                     inDegree[i]++;
                     dependents.get(source).add(i);
                 }
