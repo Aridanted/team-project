@@ -19,7 +19,7 @@ import java.util.Objects;
 public final class ImportCircuitInteractor implements ImportCircuitInputBoundary {
 
     private final CircuitFileDataAccessInterface circuitFiles;
-    private final ImportCircuitSessionInterface session;
+    private final ImportCircuitDataAccessInterface session;
     private final ImportCircuitOutputBoundary presenter;
 
     /**
@@ -28,7 +28,7 @@ public final class ImportCircuitInteractor implements ImportCircuitInputBoundary
      * @param presenter    output port for success and failure views
      */
     public ImportCircuitInteractor(CircuitFileDataAccessInterface circuitFiles,
-                                   ImportCircuitSessionInterface session,
+                                   ImportCircuitDataAccessInterface session,
                                    ImportCircuitOutputBoundary presenter) {
         this.circuitFiles = Objects.requireNonNull(circuitFiles, "circuitFiles");
         this.session = Objects.requireNonNull(session, "session");

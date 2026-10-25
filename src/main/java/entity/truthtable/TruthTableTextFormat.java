@@ -36,7 +36,7 @@ public final class TruthTableTextFormat {
 
         List<String> inputLabels = null;
         List<String> outputLabels = null;
-        List<TruthTableRow> rows = new ArrayList<>();
+        List<TruthTable.Row> rows = new ArrayList<>();
         Set<String> labelsSeen = new HashSet<>();
         Set<String> inputCombinations = new HashSet<>();
 
@@ -101,7 +101,7 @@ public final class TruthTableTextFormat {
         StringBuilder sb = new StringBuilder();
         sb.append("inputs: ").append(String.join(", ", table.inputLabels())).append('\n');
         sb.append("outputs: ").append(String.join(", ", table.outputLabels())).append('\n');
-        for (TruthTableRow row : table.rows()) {
+        for (TruthTable.Row row : table.rows()) {
             appendValues(sb, row.inputs());
             sb.append(" | ");
             appendValues(sb, row.outputs());
@@ -141,7 +141,7 @@ public final class TruthTableTextFormat {
         return labels;
     }
 
-    private TruthTableRow parseRow(String line, int lineNumber, int inputCount, int outputCount,
+    private TruthTable.Row parseRow(String line, int lineNumber, int inputCount, int outputCount,
                                     Set<String> inputCombinations) throws TruthTableFormatException {
         int bar = line.indexOf('|');
         if (bar < 0) {
@@ -155,7 +155,7 @@ public final class TruthTableTextFormat {
             throw new TruthTableFormatException(lineNumber,
                     "duplicate row for inputs " + combinationKey);
         }
-        return new TruthTableRow(inputs, outputs);
+        return new TruthTable.Row(inputs, outputs);
     }
 
     private static String combinationKey(List<Logic> inputs) {

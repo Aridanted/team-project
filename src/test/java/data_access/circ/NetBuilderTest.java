@@ -18,8 +18,8 @@ class NetBuilderTest {
         return new Point(x, y);
     }
 
-    private static RawWire w(int x1, int y1, int x2, int y2) {
-        return new RawWire(p(x1, y1), p(x2, y2));
+    private static RawCircuit.RawWire w(int x1, int y1, int x2, int y2) {
+        return new RawCircuit.RawWire(p(x1, y1), p(x2, y2));
     }
 
     @Test

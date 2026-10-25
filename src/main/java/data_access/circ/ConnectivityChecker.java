@@ -22,6 +22,14 @@ import java.util.stream.Collectors;
  */
 final class ConnectivityChecker {
 
+    /** A domain component together with where its input ports are. */
+    record Placement(CircuitComponent component, List<Point> inputPorts) {
+
+        Placement {
+            inputPorts = List.copyOf(inputPorts);
+        }
+    }
+
     static final int LARGE_CIRCUIT_COMPONENTS = 300;
 
     /** How close a loose wire end must be to an unattached port to be reported. */

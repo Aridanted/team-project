@@ -3,7 +3,7 @@ package data_access.session;
 import entity.circuit.Circuit;
 import entity.truthtable.CheckResult;
 import use_case.check_circuit.CheckCircuitDataAccessInterface;
-import use_case.import_circuit.ImportCircuitSessionInterface;
+import use_case.import_circuit.ImportCircuitDataAccessInterface;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -13,7 +13,7 @@ import java.util.Optional;
  * each use case's small session interface (interface segregation), so use cases share data
  * without calling each other.
  */
-public final class InMemorySessionStore implements ImportCircuitSessionInterface,
+public final class InMemorySessionStore implements ImportCircuitDataAccessInterface,
         CheckCircuitDataAccessInterface {
 
     private Circuit currentCircuit;

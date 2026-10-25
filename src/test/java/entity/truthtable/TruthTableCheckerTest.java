@@ -177,7 +177,7 @@ class TruthTableCheckerTest {
     void notSimulatableExceptionPropagates() {
         Circuit circuit = CircuitTestFactory.halfAdder();
         TruthTable expected = new TruthTable(List.of("A", "B"), List.of("Sum", "Cout"),
-                List.of(new TruthTableRow(List.of(Logic.ZERO, Logic.ZERO), List.of(Logic.ZERO, Logic.ZERO))));
+                List.of(new TruthTable.Row(List.of(Logic.ZERO, Logic.ZERO), List.of(Logic.ZERO, Logic.ZERO))));
         CircuitEvaluator failing = (c, inputs) -> {
             throw new NotSimulatableException("loop");
         };

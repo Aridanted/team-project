@@ -39,7 +39,7 @@ public final class TruthTableGenerator {
                     "The circuit has " + inputCount + " inputs; at most 10 are supported.");
         }
         int rowCount = 1 << inputCount;
-        List<TruthTableRow> rows = new ArrayList<>(rowCount);
+        List<TruthTable.Row> rows = new ArrayList<>(rowCount);
         for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
             Map<String, Logic> inputsByLabel = new HashMap<>();
             List<Logic> inputValues = new ArrayList<>(inputCount);
@@ -54,7 +54,7 @@ public final class TruthTableGenerator {
             for (String label : outputLabels) {
                 outputValues.add(outputsByLabel.get(label));
             }
-            rows.add(new TruthTableRow(inputValues, outputValues));
+            rows.add(new TruthTable.Row(inputValues, outputValues));
         }
         return new TruthTable(inputLabels, outputLabels, rows);
     }

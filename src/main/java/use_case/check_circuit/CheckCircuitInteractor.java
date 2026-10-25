@@ -5,7 +5,6 @@ import entity.simulation.Logic;
 import entity.simulation.NotSimulatableException;
 import entity.truthtable.CheckResult;
 import entity.truthtable.LabelMismatchException;
-import entity.truthtable.RowResult;
 import entity.truthtable.TruthTable;
 import entity.truthtable.TruthTableChecker;
 import entity.truthtable.TruthTableFormatException;
@@ -62,7 +61,7 @@ public final class CheckCircuitInteractor implements CheckCircuitInputBoundary {
                 rows, result.passedRows(), result.totalRows(), result.failingOutputs());
     }
 
-    private static CheckedRow toCheckedRow(RowResult row) {
+    private static CheckedRow toCheckedRow(CheckResult.RowResult row) {
         return new CheckedRow(symbols(row.inputs()), symbols(row.expected()), symbols(row.actual()),
                 row.failingOutputs());
     }

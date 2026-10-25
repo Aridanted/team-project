@@ -1,5 +1,7 @@
 package entity.truthtable;
 
+import entity.simulation.Logic;
+
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -11,6 +13,29 @@ import java.util.Set;
  * @param rows     one result per expected row, in the table's order
  */
 public record CheckResult(TruthTable expected, List<RowResult> rows) {
+
+    /**
+     * The outcome of checking one expected row against the circuit.
+     *
+     * @param index          0-based position of the row in the expected table
+     * @param expected       expected outputs ({@link Logic#UNKNOWN} = don't care)
+     * @param actual         outputs the circuit produced
+     * @param failingOutputs labels of outputs whose actual value differs from a concrete expected one
+     */
+    public record RowResult(int index, List<Logic> inputs, List<Logic> expected, List<Logic> actual,
+                            List<String> failingOutputs) {
+
+        public RowResult {
+            inputs = List.copyOf(inputs);
+            expected = List.copyOf(expected);
+            actual = List.copyOf(actual);
+            failingOutputs = List.copyOf(failingOutputs);
+        }
+
+        public boolean passed() {
+            return failingOutputs.isEmpty();
+        }
+    }
 
     public CheckResult {
         rows = List.copyOf(rows);

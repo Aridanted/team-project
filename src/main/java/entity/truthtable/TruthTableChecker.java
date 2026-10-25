@@ -40,9 +40,9 @@ public final class TruthTableChecker {
         Map<String, String> specInputToCircuit = labelMap(expected.inputLabels(), circuitInputLabels);
         Map<String, String> specOutputToCircuit = labelMap(expected.outputLabels(), circuitOutputLabels);
 
-        List<RowResult> rowResults = new ArrayList<>();
+        List<CheckResult.RowResult> rowResults = new ArrayList<>();
         for (int i = 0; i < expected.rows().size(); i++) {
-            TruthTableRow row = expected.rows().get(i);
+            TruthTable.Row row = expected.rows().get(i);
             Map<String, Logic> inputsByCircuitLabel = new HashMap<>();
             for (int j = 0; j < expected.inputLabels().size(); j++) {
                 String specLabel = expected.inputLabels().get(j);
@@ -63,7 +63,7 @@ public final class TruthTableChecker {
                 }
             }
 
-            rowResults.add(new RowResult(i, row.inputs(), row.outputs(), actual, failingOutputs));
+            rowResults.add(new CheckResult.RowResult(i, row.inputs(), row.outputs(), actual, failingOutputs));
         }
 
         return new CheckResult(expected, rowResults);

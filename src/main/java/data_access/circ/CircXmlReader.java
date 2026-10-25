@@ -137,10 +137,10 @@ final class CircXmlReader {
         return attributes;
     }
 
-    private static List<RawWire> wires(Element circuit) throws CircuitParseException {
-        List<RawWire> wires = new ArrayList<>();
+    private static List<RawCircuit.RawWire> wires(Element circuit) throws CircuitParseException {
+        List<RawCircuit.RawWire> wires = new ArrayList<>();
         for (Element wire : childElements(circuit, "wire")) {
-            wires.add(new RawWire(location(wire.getAttribute("from"), "wire"),
+            wires.add(new RawCircuit.RawWire(location(wire.getAttribute("from"), "wire"),
                     location(wire.getAttribute("to"), "wire")));
         }
         return wires;

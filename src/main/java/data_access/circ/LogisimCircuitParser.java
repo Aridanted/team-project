@@ -1,5 +1,6 @@
 package data_access.circ;
 
+import data_access.circ.ConnectivityChecker.Placement;
 import entity.circuit.Circuit;
 import entity.circuit.CircuitComponent;
 import entity.circuit.CircuitWarning;

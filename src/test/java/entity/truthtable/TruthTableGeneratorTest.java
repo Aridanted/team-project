@@ -65,7 +65,7 @@ class TruthTableGeneratorTest {
         assertTrue(table.rows().stream().allMatch(row -> row.outputs().equals(List.of(Logic.ONE))));
     }
 
-    private static void assertRow(TruthTableRow row, Logic a, Logic b, Logic cout, Logic sum) {
+    private static void assertRow(TruthTable.Row row, Logic a, Logic b, Logic cout, Logic sum) {
         assertEquals(List.of(a, b), row.inputs());
         assertEquals(List.of(cout, sum), row.outputs());
     }

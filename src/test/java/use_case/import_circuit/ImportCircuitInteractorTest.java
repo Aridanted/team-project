@@ -138,7 +138,7 @@ class ImportCircuitInteractorTest {
         }
     }
 
-    private static final class RecordingSession implements ImportCircuitSessionInterface {
+    private static final class RecordingSession implements ImportCircuitDataAccessInterface {
         Optional<Circuit> current = Optional.empty();
         int setCount;
 

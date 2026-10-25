@@ -30,11 +30,11 @@ final class NetBuilder {
     private static final Comparator<Point> BY_POSITION =
             Comparator.comparingInt(Point::x).thenComparingInt(Point::y);
 
-    NetMap build(List<RawWire> wires, Collection<Point> ports) {
+    NetMap build(List<RawCircuit.RawWire> wires, Collection<Point> ports) {
         UnionFind sets = new UnionFind();
         Map<Point, Integer> endpointUses = new HashMap<>();
         Set<Point> points = new LinkedHashSet<>(ports);
-        for (RawWire wire : wires) {
+        for (RawCircuit.RawWire wire : wires) {
             points.add(wire.from());
             points.add(wire.to());
             endpointUses.merge(wire.from(), 1, Integer::sum);
@@ -43,7 +43,7 @@ final class NetBuilder {
         points.forEach(sets::add);
 
         Set<Point> onAnotherWire = new HashSet<>();
-        for (RawWire wire : wires) {
+        for (RawCircuit.RawWire wire : wires) {
             sets.union(wire.from(), wire.to());
             for (Point point : points) {
                 if (liesStrictlyInside(point, wire)) {
@@ -55,7 +55,7 @@ final class NetBuilder {
 
         Map<Point, Integer> netByPoint = numberNets(points, sets);
         Set<Integer> wiredNets = new HashSet<>();
-        for (RawWire wire : wires) {
+        for (RawCircuit.RawWire wire : wires) {
             wiredNets.add(netByPoint.get(wire.from()));
         }
         Set<Point> portSet = new HashSet<>(ports);
@@ -89,7 +89,7 @@ final class NetBuilder {
         return netByPoint;
     }
 
-    private static boolean liesStrictlyInside(Point p, RawWire wire) {
+    private static boolean liesStrictlyInside(Point p, RawCircuit.RawWire wire) {
         Point a = wire.from();
         Point b = wire.to();
         if (p.equals(a) || p.equals(b)) {
