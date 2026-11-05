@@ -12,12 +12,12 @@ public class TutorInteractor implements TutorInputBoundary {
         String studentMsg = inputData.getMessage();
 
         if (studentMsg == null || studentMsg.trim().isEmpty()) {
-            outputBoundary.prepareFailView("Tin nhắn không được để trống!");
+            outputBoundary.prepareFailView("Message cannot be empty!");
             return;
         }
 
-        // Đóng vai AI Tutor (Socratic method): Nudge without giving direct answer
-        String aiResponse = "AI Tutor: Bạn vừa hỏi '" + studentMsg + "'. Hãy thử kiểm tra lại giá trị đầu vào ở bảng chân lý dòng bị sai xem cổng logic đang cho ra tín hiệu gì nhé!";
+        // AI Tutor role (Socratic method): Nudge without giving direct answer
+        String aiResponse = "AI Tutor: You asked '" + studentMsg + "'. Try checking the input values at the failing row in the truth table to see what output the logic gate produces!";
 
         outputBoundary.prepareSuccessView(aiResponse);
     }
