@@ -24,14 +24,7 @@ final class ReferenceEvaluator {
 
     /** @return output label to '0', '1' or 'x' (unknown) */
     static Map<String, Character> evaluate(Circuit circuit, Map<String, Boolean> inputs) {
-        Boolean[] nets = new Boolean[circuit.netCount()];
-        for (CircuitComponent component : circuit.components()) {
-            if (component instanceof InputPin pin) {
-                nets[pin.net()] = inputs.get(pin.label());
-            } else if (component instanceof Constant constant) {
-                nets[constant.net()] = constant.value();
-            }
-        }
+        Boolean[] nets = initialNets(circuit, inputs);
         boolean changed = true;
         for (int round = 0; changed && round <= circuit.gates().size(); round++) {
             changed = false;
@@ -49,6 +42,18 @@ final class ReferenceEvaluator {
             outputs.put(pin.label(), value == null ? 'x' : value ? '1' : '0');
         }
         return outputs;
+    }
+
+    private static Boolean[] initialNets(Circuit circuit, Map<String, Boolean> inputs) {
+        Boolean[] nets = new Boolean[circuit.netCount()];
+        for (CircuitComponent component : circuit.components()) {
+            if (component instanceof InputPin pin) {
+                nets[pin.net()] = inputs.get(pin.label());
+            } else if (component instanceof Constant constant) {
+                nets[constant.net()] = constant.value();
+            }
+        }
+        return nets;
     }
 
     private static Boolean apply(Gate gate, Boolean[] nets) {

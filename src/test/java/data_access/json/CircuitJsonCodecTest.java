@@ -20,7 +20,8 @@ class CircuitJsonCodecTest {
 
     private static final String HALF_ADDER_JSON = "{\"name\":\"half adder\",\"inputs\":[\"A\",\"B\"],"
             + "\"outputs\":[\"Sum\",\"Cout\"],\"gates\":[{\"id\":\"g1\",\"type\":\"XOR\",\"inputs\":[\"A\",\"B\"]},"
-            + "{\"id\":\"g2\",\"type\":\"AND\",\"inputs\":[\"A\",\"!B\"]}],\"connections\":{\"Sum\":\"g1\",\"Cout\":\"g2\"}}";
+            + "{\"id\":\"g2\",\"type\":\"AND\",\"inputs\":[\"A\",\"!B\"]}],"
+            + "\"connections\":{\"Sum\":\"g1\",\"Cout\":\"g2\"}}";
 
     private final CircuitJsonCodec codec = new CircuitJsonCodec();
 

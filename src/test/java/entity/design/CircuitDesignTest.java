@@ -50,7 +50,9 @@ class CircuitDesignTest {
     @Test
     void gatesMayUseGatesDefinedLater() {
         CircuitDesign design = new CircuitDesign("c", List.of("A"), List.of("Y"),
-                List.of(new GateSpec("g1", GateType.NOT, List.of("g2")), new GateSpec("g2", GateType.NOT, List.of("A"))),
+                List.of(
+                        new GateSpec("g1", GateType.NOT, List.of("g2")),
+                        new GateSpec("g2", GateType.NOT, List.of("A"))),
                 Map.of("Y", "g1"));
 
         assertEquals(2, design.gates().size());

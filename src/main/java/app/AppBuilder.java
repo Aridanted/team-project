@@ -1,6 +1,7 @@
 package app;
 
 import data_access.circ.LogisimCircuitParser;
+import data_access.file.TableFileStore;
 import data_access.json.CircuitJsonCodec;
 import data_access.json.JsonSettingsStore;
 import data_access.llm.JdkHttpTransport;
@@ -24,9 +25,13 @@ import interface_adapter.ai_settings.AiSettingsViewModel;
 import interface_adapter.check_circuit.CheckCircuitController;
 import interface_adapter.check_circuit.CheckCircuitPresenter;
 import interface_adapter.check_circuit.CheckCircuitViewModel;
+import interface_adapter.check_circuit.SpecTemplate;
 import interface_adapter.import_circuit.ImportCircuitController;
 import interface_adapter.import_circuit.ImportCircuitPresenter;
 import interface_adapter.import_circuit.ImportCircuitViewModel;
+import interface_adapter.table_file.TableFileController;
+import interface_adapter.table_file.TableFilePresenter;
+import interface_adapter.table_file.TableFileViewModel;
 import interface_adapter.tutor_chat.TutorChatController;
 import interface_adapter.tutor_chat.TutorChatPresenter;
 import interface_adapter.tutor_chat.TutorChatViewModel;
@@ -34,21 +39,26 @@ import use_case.ai_settings.AiSettingsInteractor;
 import use_case.ai_settings.SettingsStorageException;
 import use_case.check_circuit.CheckCircuitInteractor;
 import use_case.import_circuit.ImportCircuitInteractor;
+import use_case.table_file.TableFileInteractor;
 import use_case.tutor_chat.TutorChatInteractor;
 import use_case.tutor_chat.TutorGateway;
 import view.AiSettingsView;
 import view.CircuitView;
 import view.MainFrame;
+import view.OnEventThread;
 import view.PlaceholderView;
+import view.TruthTableView;
 import view.TutorChatView;
 
+import javax.swing.JSplitPane;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Map;
 
 /**
- * Composition root: the only class that creates concrete classes from every layer. Each feature
- * has its own private method so teammates add their tab without merge conflicts.
+ * Composition root: the only class that creates concrete classes from every layer. {@link #build()}
+ * calls private {@code addXxxTab()} methods on a {@link MainFrame}; teammates replace placeholders
+ * for Tutor and Builder without editing each other's tab code.
  */
 public final class AppBuilder {
 
@@ -58,6 +68,7 @@ public final class AppBuilder {
     private final Map<String, String> environment;
     private final MainFrame frame = new MainFrame();
     private final InMemorySessionStore session = new InMemorySessionStore();
+    private final TruthTableTextFormat tableFormat = new TruthTableTextFormat();
     private final JsonSettingsStore settingsStore;
     private final LlmClientFactory llmClientFactory;
 
@@ -88,10 +99,30 @@ public final class AppBuilder {
 
         CheckCircuitViewModel checkViewModel = new CheckCircuitViewModel();
         CheckCircuitController checkController = new CheckCircuitController(new CheckCircuitInteractor(
-                session, new TruthTableTextFormat(), new TruthTableChecker(new CircuitSimulator()),
+                session, tableFormat, new TruthTableChecker(new CircuitSimulator()),
                 new CheckCircuitPresenter(checkViewModel)));
 
-        frame.addTab("Circuit", new CircuitView(importController, importViewModel, checkController, checkViewModel));
+        TableFileViewModel tableFileViewModel = new TableFileViewModel();
+        TableFileController tableFileController = new TableFileController(new TableFileInteractor(
+                new TableFileStore(), tableFormat, new TableFilePresenter(tableFileViewModel)));
+
+        CircuitView circuitView = new CircuitView(importViewModel, importController);
+        TruthTableView tableView = new TruthTableView(checkViewModel, checkController, tableFileViewModel,
+                tableFileController);
+
+        importViewModel.addPropertyChangeListener(OnEventThread.listener(event -> {
+            var state = importViewModel.getState();
+            if (state.getError().isEmpty()) {
+                tableView.clearResults();
+                if (state.isLoaded()) {
+                    tableView.offerTemplate(SpecTemplate.forLabels(state.getInputLabels(), state.getOutputLabels()));
+                }
+            }
+        }));
+
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, circuitView, tableView);
+        split.setResizeWeight(0.55);
+        frame.addTab("Circuit", split);
     }
 
     private void addTutorTab() {
@@ -105,7 +136,8 @@ public final class AppBuilder {
 
     /** Person 4: replace the placeholder with the builder view, built on {@link #llmClient}. */
     private void addBuilderTab() {
-        frame.addTab("Builder", new PlaceholderView("The circuit builder (for practice and learning) will appear here."));
+        String message = "The circuit builder (for practice and learning) will appear here.";
+        frame.addTab("Builder", new PlaceholderView(message));
     }
 
     private void addSettingsTab() {

@@ -35,8 +35,10 @@ class AiSettingsPresenterTest {
 
     @Test
     void settingsViewListsProvidersAndSaysWhenSaved() {
-        presenter.prepareSettingsView(new AiSettingsOutputData(
-                List.of(new ProviderSettings("groq", "Groq", "gsk"), new ProviderSettings("gemini", "Gemini", "")), true));
+        var providers = List.of(
+                new ProviderSettings("groq", "Groq", "gsk"),
+                new ProviderSettings("gemini", "Gemini", ""));
+        presenter.prepareSettingsView(new AiSettingsOutputData(providers, true));
 
         AiSettingsState state = viewModel.getState();
         assertEquals(List.of(new ProviderRow("groq", "Groq", "gsk"), new ProviderRow("gemini", "Gemini", "")),

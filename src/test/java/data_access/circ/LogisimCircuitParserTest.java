@@ -226,8 +226,12 @@ class LogisimCircuitParserTest {
                 <project>
                   <lib desc="#Wiring" name="0"/>
                   <main name="top"/>
-                  <circuit name="helper"><comp lib="0" loc="(10,10)" name="Pin"><a name="label" val="H"/></comp></circuit>
-                  <circuit name="top"><comp lib="0" loc="(10,10)" name="Pin"><a name="label" val="T"/></comp></circuit>
+                  <circuit name="helper">
+                    <comp lib="0" loc="(10,10)" name="Pin"><a name="label" val="H"/></comp>
+                  </circuit>
+                  <circuit name="top">
+                    <comp lib="0" loc="(10,10)" name="Pin"><a name="label" val="T"/></comp>
+                  </circuit>
                 </project>
                 """;
         Circuit circuit = parseXml(xml);

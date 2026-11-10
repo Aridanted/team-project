@@ -37,8 +37,10 @@ class AiSettingsInteractorTest {
 
         AiSettingsOutputData data = presenter.settings.get(0);
         assertFalse(data.saved());
-        assertEquals(List.of(new ProviderSettings("groq", "Groq", "gsk_1"), new ProviderSettings("gemini", "Gemini", "")),
-                data.providers());
+        var expected = List.of(
+                new ProviderSettings("groq", "Groq", "gsk_1"),
+                new ProviderSettings("gemini", "Gemini", ""));
+        assertEquals(expected, data.providers());
         assertTrue(presenter.errors.isEmpty());
     }
 
