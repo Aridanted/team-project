@@ -92,8 +92,9 @@ Use `table_file` as your template. For a use case called `tutor_chat`:
    open circuit, add `implements TutorChatDataAccessInterface` to `InMemorySessionStore`.
 4. **`view/TutorView.java`**: a `JPanel` that calls your controller and listens to your view model.
    Views may only import `interface_adapter` classes.
-5. **`app/AppBuilder.java`**: add one method, `addTutorTab()`, that creates and connects the
-   above, and call it in `Main`. Don't edit the other `addXxxTab()` methods.
+5. **`app/AppBuilder.java`**: replace the placeholder in your `addTutorTab()` or `addBuilderTab()`
+   method with your view (wired like the Circuit tab). Don't edit the other private `addXxxTab()`
+   methods.
 6. **Tests**: test the interactor with small fake classes (see `TableFileInteractorTest`), and
    the presenter by reading the view model's state (see `TableFilePresenterTest`). Never call
    the network or use a real API key in a test.
@@ -108,6 +109,11 @@ mvn verify        # compiles, runs Checkstyle, runs every test (CI runs the same
   install the *CheckStyle-IDEA* plugin and add `checkstyle.xml` as a configuration.
 - **`DependencyRuleTest`** tells you exactly which import broke the layer rules.
 - To run the app: `mvn compile exec:java`.
+
+View helpers: `view.Styles` (colours and labels), `view.OnEventThread` (safe view-model
+listeners), and `view.BackgroundTask` (short background jobs with a busy state). For AI tests use
+`data_access.llm.FakeLlmClient` and `FakeHttpTransport` in test sources (no network).
+Circuit JSON rules: [`circuit-json.md`](circuit-json.md).
 
 Design choices and the reasons behind them are in [`design-decisions.md`](design-decisions.md);
 who builds what is in [`team-plan.md`](team-plan.md).

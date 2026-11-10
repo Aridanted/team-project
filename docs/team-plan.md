@@ -20,21 +20,21 @@ labs.
 | Person | Owns | Use case (course requirement: one each) |
 |--------|------|-----------------------------------------|
 | 1 Aryan (lead) | Opening and checking circuits, the app window, the Circuit tab | Open a circuit, check it against a truth table, save and load tables (**done**) |
-| 2 Arian | AI connection, circuit JSON format, the Settings tab | AI settings: save an API key and test the connection |
-| 3 Alice | AI tutor and the Tutor tab | Chat with a tutor about my circuit |
-| 4 Ivy | AI circuit builder and the Builder tab | Build a circuit from a description |
+| 2 Alice | AI connection, circuit JSON format, the Settings tab | AI settings: save an API key and test the connection |
+| 3 Ivy | AI tutor and the Tutor tab | Chat with a tutor about my circuit |
+| 4 Arian | AI circuit builder and the Builder tab | Build a circuit from a description |
 
 The course says whoever leads a use case writes "the part of the UI that allows the user to
 trigger the Use Case" and its update afterwards, so **everyone builds the tab for their own use
 case**. Each tab is added by its own `addXxxTab()` method in `app.AppBuilder`.
 
-Reviews rotate: **Aryan reviews Arian, Arian reviews Alice, Alice reviews Ivy, Ivy reviews Aryan.**
+Reviews rotate: **Aryan reviews Alice, Alice reviews Ivy, Ivy reviews Arian, Arian reviews Aryan.**
 
 ---
 
 ## 3. What is already done
 
-Everything below has tests and passes `mvn verify` (Checkstyle plus 217 tests).
+Everything below has tests and passes `mvn verify` (Checkstyle plus 324 tests).
 
 ### 3.1 Project setup
 - Maven project, Java 21, JUnit 5, `org.json`.
@@ -88,12 +88,20 @@ own small interfaces (add `implements YourInterface` to it).
 
 ### 3.6 The app window and the Circuit tab
 - `app.Main` starts the app (`mvn compile exec:java`); `app.AppBuilder` creates and connects
-  everything. Add your feature with your own `addXxxTab()` method and call it in `Main`.
+  everything. `build()` calls private `addXxxTab()` methods on `view.MainFrame`.
 - `view.CircuitView` (open a `.circ`, drawing via `view.CircuitCanvas`, warnings) and
-  `view.TruthTableView` (table editor, Load / Save / Check, coloured results).
+  `view.TruthTableView` (table editor, Load / Save / Check, coloured results) share the Circuit tab.
 - Save and load expected tables (`use_case.table_file`, `data_access.file.TableFileStore`): the
   smallest complete use case, and the best template to copy.
 - Checkstyle (`checkstyle.xml`) runs in `mvn verify` and in CI.
+
+### 3.8 Alice's `ai-connect` branch (merged)
+- Circuit JSON format (`entity.design`, `docs/circuit-json.md`) and `CircuitJsonCodec`.
+- LLM clients (Gemini, Groq) behind `LlmClient`, with decorator chain for fallback and rate limits.
+- AI settings use case, `JsonSettingsStore`, and the Settings tab.
+- `MainFrame`, shared view helpers (`Styles`, `OnEventThread`, `BackgroundTask`), and Tutor /
+  Builder tabs as `PlaceholderView` panels for Ivy and Arian to replace in `addTutorTab()` /
+  `addBuilderTab()`.
 
 ### 3.7 Things teammates should reuse
 
@@ -139,7 +147,7 @@ Circuit fromFile = new LogisimCircuitParser().load("/path/to/file.circ");
 
 ---
 
-## 5. Person 2 (Arian): AI connection, JSON format, AI settings
+## 5. Person 2 (Alice): AI connection, JSON format, AI settings
 
 You build the bridge between the app and the AI, and the Settings tab. Do steps 1 to 3 in the
 first days: Persons 3 and 4 depend on them.
@@ -212,7 +220,7 @@ The one format the app and the AI use to describe circuits.
 
 ---
 
-## 6. Person 3 (Alice): AI tutor
+## 6. Person 3 (Ivy): AI tutor
 
 The student chats with a tutor that knows their circuit and their failing rows. It guides with
 questions and hints; it never gives the full answer.
@@ -268,7 +276,7 @@ conversation; with no API key the Offline badge shows and hints still work.
 
 ---
 
-## 7. Person 4 (Ivy): AI circuit builder
+## 7. Person 4 (Arian): AI circuit builder
 
 The student describes a circuit in words; the app builds it, shows it, verifies it, and saves a
 `.circ` file that opens in Logisim. Label the tab "for practice and learning".
@@ -324,7 +332,7 @@ truth table, saves a `.circ` file, and that file opens in Logisim and behaves th
 
 ## 8. Person 1 (Aryan, lead): remaining work
 
-- Review Person 2's pull requests within 48 hours.
+- Review Alice's pull requests within 48 hours.
 - Answer questions about the parser, simulator, checker and geometry.
 - Help Person 4 with the `.circ` writer (the hardest geometry work).
 - Run the weekly sync, keep the issue board moving, check that everyone is committing.
@@ -333,8 +341,8 @@ truth table, saves a `.circ` file, and that file opens in Logisim and behaves th
 
 ## 9. Order of work
 
-| When | Person 2 | Person 3 | Person 4 |
-|------|----------|----------|----------|
+| When | Person 2 (Alice) | Person 3 (Ivy) | Person 4 (Arian) |
+|------|----------------|----------------|------------------|
 | Sprint 0 (first days) | JSON format + `CircuitDesign`; `LlmClient` + `FakeLlmClient` | Chat classes; `TutorGateway` port | Boolean expression parser |
 | Sprint 1 | `CircuitJsonCodec`; Gemini and Groq clients | Use case + safety filter + offline tutor | Use case + validator + assembler |
 | Sprint 2 | AI settings + Settings tab | AI tutor gateway and prompts; Tutor tab | AI designer; `.circ` writer; save; Builder tab |
