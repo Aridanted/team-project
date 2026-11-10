@@ -62,7 +62,8 @@ class JsonSettingsStoreTest {
         Path file = folder.resolve("settings.json");
         Files.writeString(file, "{not json");
 
-        SettingsStorageException e = assertThrows(SettingsStorageException.class, () -> new JsonSettingsStore(file).load());
+        SettingsStorageException e = assertThrows(SettingsStorageException.class,
+                () -> new JsonSettingsStore(file).load());
 
         assertTrue(e.getMessage().contains("is damaged"));
     }

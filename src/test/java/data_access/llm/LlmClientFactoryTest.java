@@ -55,7 +55,8 @@ class LlmClientFactoryTest {
 
     @Test
     void environmentKeysAreUsedWhenNothingIsSaved() throws LlmException {
-        LlmClientFactory factory = new LlmClientFactory(specs(), Map.of("GROQ_API_KEY", "gsk_env", "GEMINI_API_KEY", " "));
+        Map<String, String> env = Map.of("GROQ_API_KEY", "gsk_env", "GEMINI_API_KEY", " ");
+        LlmClientFactory factory = new LlmClientFactory(specs(), env);
 
         assertEquals("groq:gsk_env:llama", factory.create(AiSettings.defaults()).complete(REQUEST));
     }
