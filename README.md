@@ -1,43 +1,142 @@
 # LogiCoach
 
-A Java Swing app that imports Logisim-evolution circuits (`.circ`), checks them against a truth
-table, offers an AI tutor chat that guides without giving answers, and builds practice circuits
-from plain-English descriptions. It is a learning tool: it does not solve graded labs.
+## Team Information
 
-## Team
+### Team Members
+- Aryan Pournajafian
+- Arian Mahlooji
+- Thi Vinh Duy (Alice) Nguyen
+- Hai Yen (Ivy) Mai
+
+---
+
+## Project Description
+
+### Domain
+
+LogiCoach is a Java desktop application for students learning digital logic. Students can import Logisim-evolution circuits, compare their behavior with an expected truth table, get guidance from an AI tutor, and generate practice circuits from plain-English descriptions.
+
+---
+
+## User Stories
+
+### User Story 1
+As a student, I want to open a Logisim `.circ` file and check it against my expected truth table, so I can identify incorrect rows.
+
+### User Story 2
+As a student, I want to save my AI API key and test the connection, so I can use AI features without repeating setup.
+
+### User Story 3
+As a student, I want an AI tutor to guide me through mistakes in my circuit without revealing the solution, so I can learn to fix them myself.
+
+### User Story 4
+As a student, I want to describe a circuit in plain English and receive a working Logisim circuit, so I can study its design.
+
+---
+
+## Use Cases
+
+### Use Case 1
+**Import and Check Circuit:** Load a `.circ` file, simulate its outputs, and compare them with the expected truth table.
+
+### Use Case 2
+**Configure AI:** Save an API key and test whether the selected AI provider is available.
+
+### Use Case 3
+**AI Tutor:** Ask questions about a circuit and receive guided hints.
+
+### Use Case 4
+**Build Circuit:** Describe a circuit in natural language, generate and validate its design, and export a `.circ` file.
+
+---
+
+## Minimal Viable Product (MVP)
 
 | Member | GitHub | Responsibility |
 |--------|--------|----------------|
-| 1 `<name>` | `@<user>` | Open and check circuits (parser, simulator, checker) |
-| 2 `<name>` | `@<user>` | AI connection, circuit JSON format, Swing UI, AI settings |
-| 3 `<name>` | `@<user>` | AI tutor chat |
-| 4 `<name>` | `@<user>` | AI circuit builder |
+| 1 `Aryan Pournajafian` | `@Aridanted` | Open and check circuits (parser, simulator, checker) |
+| 2 `Thi Vinh Duy (Alice) Nguyen` | `@aliceenguyen` | AI connection, circuit JSON format, Swing UI, AI settings |
+| 3 `Hai Yen (Ivy) Mai` | `@hyen0804` | AI tutor chat |
+| 4 `Arian Mahlooji` | `@A-rian` | AI circuit builder |
 
-## User stories
+---
 
-- **US1 (1):** As a student, I want to open a Logisim `.circ` file and check it against the truth
-  table I expect, so that I can see exactly which rows of my circuit are wrong.
-- **US2 (2):** As a student, I want to enter my AI API key once and test the connection, so that
-  the AI features work without setup every time.
-- **US3 (3):** As a student with a failing circuit, I want to chat with a tutor that knows my
-  circuit and nudges me without giving the answer, so that I learn to fix it myself.
-- **US4 (4):** As a student, I want to describe a circuit in plain English and get a working
-  circuit I can open in Logisim, so that I can study how it is built.
+## Entities
 
-## Requirements
+### Entity 1: Circuit
+Represents a logic circuit containing components, connections, and wires.
 
-- JDK 21 or newer (`java -version`)
-- Maven 3.9+ (`mvn -v`), or just use the Maven tool window in IntelliJ
+### Entity 2: Gate
+Represents a logic gate, its inputs, and its output.
 
-## How to run
+### Entity 3: TruthTable
+Represents input combinations and their expected or simulated outputs.
+
+### Entity 4: CircuitDesign
+Represents a proposed circuit using input/output labels, gate specifications, and connections.
+
+---
+
+## API Usage
+
+**API Name:** Google Gemini API and Groq API
+
+**Documentation:** [Gemini API](https://ai.google.dev/gemini-api/docs) · [Groq API](https://console.groq.com/docs/overview)
+
+**How it is used in the program:** The AI APIs support tutoring conversations and natural-language circuit generation.
+
+---
+
+## Design Diagrams
+
+### UML Class Diagram
+
+```mermaid
+classDiagram
+    class Circuit
+    class Gate
+    class TruthTable
+    class CircuitSimulator
+    class TruthTableGenerator
+    Circuit "1" o-- "many" Gate
+    CircuitSimulator --> Circuit
+    TruthTableGenerator --> CircuitSimulator
+    TruthTableGenerator --> TruthTable
+```
+
+### Sequence Diagrams
+
+```mermaid
+sequenceDiagram
+    actor Student
+    participant UI
+    participant Controller
+    participant Interactor
+    participant Simulator
+    Student->>UI: Check circuit
+    UI->>Controller: Submit expected truth table
+    Controller->>Interactor: Execute check
+    Interactor->>Simulator: Evaluate circuit
+    Simulator-->>Interactor: Actual outputs
+    Interactor-->>UI: Check results (via presenter)
+    UI-->>Student: Show results
+```
+
+---
+
+## How to Run
+
+Requirements: Java 21+ and Maven 3.9+.
 
 ```bash
-mvn test        # run all tests
-mvn exec:java   # launch the app
+mvn test
+mvn exec:java
 ```
 
 Optional environment variables: `GEMINI_API_KEY`, `GROQ_API_KEY`, `LOGICOACH_DATA_DIR`.
 Never commit keys.
+
+---
 
 ## Architecture
 
@@ -47,10 +146,16 @@ Clean Architecture with one top-level package per layer. Dependencies point inwa
 app  ->  view / data_access  ->  interface_adapter  ->  use_case  ->  entity
 ```
 
-`src/test/java/architecture/DependencyRuleTest.java` fails the build if a layer imports
-something it must not. Design choices are logged in [`docs/design-decisions.md`](docs/design-decisions.md).
+`src/test/java/architecture/DependencyRuleTest.java` fails the build if a layer imports something it must not. Design choices are logged in [`docs/design-decisions.md`](docs/design-decisions.md).
+
+---
 
 ## Workflow
 
-Nobody pushes to `main`. One branch and one pull request per issue (`Closes #N`), one approving
-review required, CI must be green. See [`.github/pull_request_template.md`](.github/pull_request_template.md).
+Nobody pushes to `main`. One branch and one pull request per issue (`Closes #N`), one approving review required, CI must be green. See [`.github/pull_request_template.md`](.github/pull_request_template.md).
+
+---
+
+## Notes
+
+AI features require a configured API key. Never commit API keys to the repository. Some features are still under development.
