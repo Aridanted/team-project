@@ -82,8 +82,8 @@ public final class TruthTableChecker {
                 .map(label -> label.toLowerCase(Locale.ROOT))
                 .collect(Collectors.toSet());
         if (!specSet.equals(circuitSet)) {
-            throw new LabelMismatchException("Spec expects " + kind + " {"
-                    + String.join(", ", specLabels) + "} but circuit has {"
+            throw new LabelMismatchException("Your table has " + kind + " {"
+                    + String.join(", ", specLabels) + "} but the circuit has {"
                     + String.join(", ", circuitLabels) + "}.");
         }
     }
