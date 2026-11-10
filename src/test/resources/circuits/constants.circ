@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project source="3.7.2" version="1.0">
+  This file is intended to be loaded by Logisim-evolution v3.7.2(https://github.com/logisim-evolution/).
+
+  <lib desc="#Wiring" name="0">
+    <tool name="Pin">
+      <a name="appearance" val="classic"/>
+    </tool>
+  </lib>
+  <lib desc="#Gates" name="1"/>
+  <main name="main"/>
+  <options>
+    <a name="gateUndefined" val="ignore"/>
+    <a name="simlimit" val="1000"/>
+    <a name="simrand" val="0"/>
+  </options>
+  <mappings/>
+  <toolbar/>
+  <circuit name="main">
+    <a name="circuit" val="main"/>
+    <comp lib="0" loc="(110,280)" name="Pin">
+      <a name="appearance" val="classic"/>
+      <a name="label" val="k3"/>
+    </comp>
+    <comp lib="0" loc="(110,320)" name="Power"/>
+    <comp lib="0" loc="(110,380)" name="Pin">
+      <a name="appearance" val="classic"/>
+      <a name="label" val="k4"/>
+    </comp>
+    <comp lib="0" loc="(110,420)" name="Ground"/>
+    <comp lib="0" loc="(120,120)" name="Constant"/>
+    <comp lib="0" loc="(120,180)" name="Pin">
+      <a name="appearance" val="classic"/>
+      <a name="label" val="k2"/>
+    </comp>
+    <comp lib="0" loc="(120,220)" name="Constant">
+      <a name="value" val="0x0"/>
+    </comp>
+    <comp lib="0" loc="(120,80)" name="Pin">
+      <a name="appearance" val="classic"/>
+      <a name="label" val="k1"/>
+    </comp>
+    <comp lib="0" loc="(140,500)" name="Constant">
+      <a name="value" val="0x0"/>
+    </comp>
+    <comp lib="0" loc="(230,100)" name="Pin">
+      <a name="appearance" val="classic"/>
+      <a name="facing" val="west"/>
+      <a name="label" val="Y1"/>
+      <a name="output" val="true"/>
+    </comp>
+    <comp lib="0" loc="(230,200)" name="Pin">
+      <a name="appearance" val="classic"/>
+      <a name="facing" val="west"/>
+      <a name="label" val="Y2"/>
+      <a name="output" val="true"/>
+    </comp>
+    <comp lib="0" loc="(230,300)" name="Pin">
+      <a name="appearance" val="classic"/>
+      <a name="facing" val="west"/>
+      <a name="label" val="Y3"/>
+      <a name="output" val="true"/>
+    </comp>
+    <comp lib="0" loc="(230,400)" name="Pin">
+      <a name="appearance" val="classic"/>
+      <a name="facing" val="west"/>
+      <a name="label" val="Y4"/>
+      <a name="output" val="true"/>
+    </comp>
+    <comp lib="0" loc="(230,500)" name="Pin">
+      <a name="appearance" val="classic"/>
+      <a name="facing" val="west"/>
+      <a name="label" val="Y5"/>
+      <a name="output" val="true"/>
+    </comp>
+    <comp lib="1" loc="(200,100)" name="AND Gate"/>
+    <comp lib="1" loc="(200,200)" name="OR Gate"/>
+    <comp lib="1" loc="(200,300)" name="XOR Gate"/>
+    <comp lib="1" loc="(200,400)" name="NOR Gate"/>
+    <comp lib="1" loc="(200,500)" name="NOT Gate"/>
+    <wire from="(110,280)" to="(140,280)"/>
+    <wire from="(110,320)" to="(140,320)"/>
+    <wire from="(110,380)" to="(140,380)"/>
+    <wire from="(110,420)" to="(140,420)"/>
+    <wire from="(120,120)" to="(150,120)"/>
+    <wire from="(120,180)" to="(150,180)"/>
+    <wire from="(120,220)" to="(150,220)"/>
+    <wire from="(120,80)" to="(150,80)"/>
+    <wire from="(140,500)" to="(170,500)"/>
+    <wire from="(200,100)" to="(230,100)"/>
+    <wire from="(200,200)" to="(230,200)"/>
+    <wire from="(200,300)" to="(230,300)"/>
+    <wire from="(200,400)" to="(230,400)"/>
+    <wire from="(200,500)" to="(230,500)"/>
+  </circuit>
+</project>
