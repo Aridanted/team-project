@@ -30,61 +30,31 @@ public final class GateFunctions {
         return Map.copyOf(map);
     }
 
+    /** A single 0 decides the result even if other inputs are unknown. */
     private static Logic and(List<Logic> inputs) {
-        for (Logic input : inputs) {
-            if (input == Logic.ZERO) {
-                return Logic.ZERO;
-            }
+        if (inputs.contains(Logic.ZERO)) {
+            return Logic.ZERO;
         }
-        for (Logic input : inputs) {
-            if (input == Logic.UNKNOWN) {
-                return Logic.UNKNOWN;
-            }
-        }
-        return Logic.ONE;
+        return inputs.contains(Logic.UNKNOWN) ? Logic.UNKNOWN : Logic.ONE;
     }
 
+    /** A single 1 decides the result even if other inputs are unknown. */
     private static Logic or(List<Logic> inputs) {
-        for (Logic input : inputs) {
-            if (input == Logic.ONE) {
-                return Logic.ONE;
-            }
+        if (inputs.contains(Logic.ONE)) {
+            return Logic.ONE;
         }
-        for (Logic input : inputs) {
-            if (input == Logic.UNKNOWN) {
-                return Logic.UNKNOWN;
-            }
-        }
-        return Logic.ZERO;
+        return inputs.contains(Logic.UNKNOWN) ? Logic.UNKNOWN : Logic.ZERO;
     }
 
     private static Logic xor(List<Logic> inputs) {
-        for (Logic input : inputs) {
-            if (input == Logic.UNKNOWN) {
-                return Logic.UNKNOWN;
-            }
-        }
-        int ones = 0;
-        for (Logic input : inputs) {
-            if (input == Logic.ONE) {
-                ones++;
-            }
-        }
-        return (ones & 1) == 1 ? Logic.ONE : Logic.ZERO;
+        return inputs.contains(Logic.UNKNOWN) ? Logic.UNKNOWN : Logic.of(countOnes(inputs) % 2 == 1);
     }
 
     private static Logic xorOne(List<Logic> inputs) {
-        for (Logic input : inputs) {
-            if (input == Logic.UNKNOWN) {
-                return Logic.UNKNOWN;
-            }
-        }
-        int ones = 0;
-        for (Logic input : inputs) {
-            if (input == Logic.ONE) {
-                ones++;
-            }
-        }
-        return ones == 1 ? Logic.ONE : Logic.ZERO;
+        return inputs.contains(Logic.UNKNOWN) ? Logic.UNKNOWN : Logic.of(countOnes(inputs) == 1);
+    }
+
+    private static long countOnes(List<Logic> inputs) {
+        return inputs.stream().filter(input -> input == Logic.ONE).count();
     }
 }

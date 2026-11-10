@@ -1,6 +1,7 @@
 package entity.simulation;
 
 import entity.circuit.Circuit;
+import entity.circuit.CircuitComponent;
 import entity.circuit.Constant;
 import entity.circuit.Gate;
 import entity.circuit.GateInput;
@@ -11,7 +12,9 @@ import entity.circuit.UnsupportedComponent;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,38 +62,29 @@ public final class CircuitSimulator implements CircuitEvaluator {
         }
     }
 
-    private List<Gate> topologicalOrder(List<Gate> gates) throws NotSimulatableException {
-        Map<Integer, Integer> netToGateIndex = new LinkedHashMap<>();
-        for (int i = 0; i < gates.size(); i++) {
-            netToGateIndex.put(gates.get(i).outputNet(), i);
-        }
-        int[] inDegree = new int[gates.size()];
-        List<List<Integer>> dependents = new ArrayList<>();
-        for (int i = 0; i < gates.size(); i++) {
-            dependents.add(new ArrayList<>());
-        }
-        for (int i = 0; i < gates.size(); i++) {
-            for (int net : gates.get(i).inputNets()) {
-                Integer source = netToGateIndex.get(net);
-                if (source != null) {
-                    inDegree[i]++;
-                    dependents.get(source).add(i);
-                }
-            }
-        }
+    /**
+     * Orders gates so that every gate comes after the gates feeding it (Kahn's algorithm): start
+     * with gates that wait on no other gate, and release a gate once everything it waits on is
+     * placed. Gates that are never released feed each other, which is a feedback loop.
+     */
+    private static List<Gate> topologicalOrder(List<Gate> gates) throws NotSimulatableException {
+        List<List<Integer>> feeds = gatesFedBy(gates);
+        int[] waitingOn = new int[gates.size()];
+        feeds.forEach(targets -> targets.forEach(target -> waitingOn[target]++));
+
         Queue<Integer> ready = new ArrayDeque<>();
         for (int i = 0; i < gates.size(); i++) {
-            if (inDegree[i] == 0) {
+            if (waitingOn[i] == 0) {
                 ready.add(i);
             }
         }
         List<Gate> order = new ArrayList<>();
         while (!ready.isEmpty()) {
-            int index = ready.remove();
-            order.add(gates.get(index));
-            for (int dependent : dependents.get(index)) {
-                if (--inDegree[dependent] == 0) {
-                    ready.add(dependent);
+            int gate = ready.remove();
+            order.add(gates.get(gate));
+            for (int target : feeds.get(gate)) {
+                if (--waitingOn[target] == 0) {
+                    ready.add(target);
                 }
             }
         }
@@ -101,20 +95,35 @@ public final class CircuitSimulator implements CircuitEvaluator {
         return order;
     }
 
-    private Logic[] initialNets(Circuit circuit, Map<String, Logic> inputsByLabel) {
+    /** @return for each gate (by index), the indexes of the gates that read its output */
+    private static List<List<Integer>> gatesFedBy(List<Gate> gates) {
+        Map<Integer, Integer> gateDrivingNet = new HashMap<>();
+        List<List<Integer>> feeds = new ArrayList<>();
+        for (int i = 0; i < gates.size(); i++) {
+            gateDrivingNet.put(gates.get(i).outputNet(), i);
+            feeds.add(new ArrayList<>());
+        }
+        for (int i = 0; i < gates.size(); i++) {
+            for (int net : gates.get(i).inputNets()) {
+                Integer source = gateDrivingNet.get(net);
+                if (source != null) {
+                    feeds.get(source).add(i);
+                }
+            }
+        }
+        return feeds;
+    }
+
+    private static Logic[] initialNets(Circuit circuit, Map<String, Logic> inputsByLabel) {
         Logic[] nets = new Logic[circuit.netCount()];
-        for (int i = 0; i < nets.length; i++) {
-            nets[i] = Logic.UNKNOWN;
-        }
+        Arrays.fill(nets, Logic.UNKNOWN);
         for (InputPin pin : circuit.inputPins()) {
-            Logic value = inputsByLabel.get(pin.label());
-            nets[pin.net()] = value != null ? value : Logic.UNKNOWN;
+            nets[pin.net()] = inputsByLabel.getOrDefault(pin.label(), Logic.UNKNOWN);
         }
-        for (Constant constant : circuit.components().stream()
-                .filter(Constant.class::isInstance)
-                .map(Constant.class::cast)
-                .toList()) {
-            nets[constant.net()] = Logic.of(constant.value());
+        for (CircuitComponent component : circuit.components()) {
+            if (component instanceof Constant constant) {
+                nets[constant.net()] = Logic.of(constant.value());
+            }
         }
         return nets;
     }
