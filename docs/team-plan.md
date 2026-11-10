@@ -19,16 +19,16 @@ labs.
 
 | Person | Owns | Use case (course requirement: one each) |
 |--------|------|-----------------------------------------|
-| 1 (lead) | Opening and checking circuits, the app window, the Circuit tab | Open a circuit, check it against a truth table, save and load tables (**done**) |
-| 2 | AI connection, circuit JSON format, the Settings tab | AI settings: save an API key and test the connection |
-| 3 | AI tutor and the Tutor tab | Chat with a tutor about my circuit |
-| 4 | AI circuit builder and the Builder tab | Build a circuit from a description |
+| 1 Aryan (lead) | Opening and checking circuits, the app window, the Circuit tab | Open a circuit, check it against a truth table, save and load tables (**done**) |
+| 2 Arian | AI connection, circuit JSON format, the Settings tab | AI settings: save an API key and test the connection |
+| 3 Alice | AI tutor and the Tutor tab | Chat with a tutor about my circuit |
+| 4 Ivy | AI circuit builder and the Builder tab | Build a circuit from a description |
 
 The course says whoever leads a use case writes "the part of the UI that allows the user to
 trigger the Use Case" and its update afterwards, so **everyone builds the tab for their own use
 case**. Each tab is added by its own `addXxxTab()` method in `app.AppBuilder`.
 
-Reviews rotate: **1 reviews 2, 2 reviews 3, 3 reviews 4, 4 reviews 1.**
+Reviews rotate: **Aryan reviews Arian, Arian reviews Alice, Alice reviews Ivy, Ivy reviews Aryan.**
 
 ---
 
@@ -139,7 +139,7 @@ Circuit fromFile = new LogisimCircuitParser().load("/path/to/file.circ");
 
 ---
 
-## 5. Person 2: AI connection, JSON format, AI settings
+## 5. Person 2 (Arian): AI connection, JSON format, AI settings
 
 You build the bridge between the app and the AI, and the Settings tab. Do steps 1 to 3 in the
 first days: Persons 3 and 4 depend on them.
@@ -212,7 +212,7 @@ The one format the app and the AI use to describe circuits.
 
 ---
 
-## 6. Person 3: AI tutor
+## 6. Person 3 (Alice): AI tutor
 
 The student chats with a tutor that knows their circuit and their failing rows. It guides with
 questions and hints; it never gives the full answer.
@@ -268,7 +268,7 @@ conversation; with no API key the Offline badge shows and hints still work.
 
 ---
 
-## 7. Person 4: AI circuit builder
+## 7. Person 4 (Ivy): AI circuit builder
 
 The student describes a circuit in words; the app builds it, shows it, verifies it, and saves a
 `.circ` file that opens in Logisim. Label the tab "for practice and learning".
@@ -322,7 +322,7 @@ truth table, saves a `.circ` file, and that file opens in Logisim and behaves th
 
 ---
 
-## 8. Person 1 (lead): remaining work
+## 8. Person 1 (Aryan, lead): remaining work
 
 - Review Person 2's pull requests within 48 hours.
 - Answer questions about the parser, simulator, checker and geometry.

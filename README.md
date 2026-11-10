@@ -11,12 +11,12 @@ working example circuit from a plain-English description.
 
 ### Team Members
 
-| Member | GitHub | Leads |
-|--------|--------|-------|
-| 1 `<name>` | `@<user>` | Open and check a circuit; save and load expected truth tables |
-| 2 `<name>` | `@<user>` | AI settings (API key and connection test) |
-| 3 `<name>` | `@<user>` | AI tutor chat |
-| 4 `<name>` | `@<user>` | AI circuit builder |
+| Member | Leads |
+|--------|-------|
+| Aryan | Open and check a circuit; save and load expected truth tables |
+| Arian | AI settings (API key and connection test) |
+| Alice | AI tutor chat |
+| Ivy | AI circuit builder |
 
 ---
 
@@ -39,22 +39,22 @@ Logisim and study. LogiCoach is a learning tool: it does not solve graded labs.
 
 ## User Stories
 
-1. **Check my circuit (Member 1).** As a student, I want to open my Logisim circuit and check it
+1. **Check my circuit (Aryan).** As a student, I want to open my Logisim circuit and check it
    against the truth table I expect, so that I can see exactly which rows of my circuit are wrong.
    I also want to save that truth table and load it later, so I don't have to type it again.
-2. **Connect the AI (Member 2).** As a student, I want to enter my AI API key once and test the
+2. **Connect the AI (Arian).** As a student, I want to enter my AI API key once and test the
    connection, so that the AI features work without setup every time.
-3. **Get unstuck (Member 3).** As a student with a failing circuit, I want to chat with a tutor
+3. **Get unstuck (Alice).** As a student with a failing circuit, I want to chat with a tutor
    that knows my circuit and nudges me without giving the answer, so that I learn to fix it
    myself.
-4. **See an example (Member 4).** As a student, I want to describe a circuit in plain English and
+4. **See an example (Ivy).** As a student, I want to describe a circuit in plain English and
    get a working circuit I can open in Logisim, so that I can study how it is built.
 
 ---
 
 ## Use Cases
 
-### Use Case 1: Open a circuit (Member 1)
+### Use Case 1: Open a circuit (Aryan)
 **Main flow**
 1. The student chooses a Logisim circuit file.
 2. The app shows the circuit's drawing, its name, and how many inputs, outputs and gates it has.
@@ -67,7 +67,7 @@ Logisim and study. LogiCoach is a learning tool: it does not solve graded labs.
 - The circuit contains parts the app cannot simulate (flip-flops, clocks, subcircuits, ...): the
   circuit is shown with those parts marked, and the app explains what to use instead.
 
-### Use Case 2: Check a circuit against a truth table (Member 1)
+### Use Case 2: Check a circuit against a truth table (Aryan)
 **Main flow**
 1. With a circuit open, the student types the truth table they expect: the input names, the
    output names, and one row per input combination. An output may be "don't care".
@@ -81,7 +81,7 @@ Logisim and study. LogiCoach is a learning tool: it does not solve graded labs.
 - The table's input or output names do not match the circuit's pins: the app lists both.
 - The circuit cannot be simulated (unsupported parts or a feedback loop): the app says why.
 
-### Use Case 3: Save and load an expected truth table (Member 1)
+### Use Case 3: Save and load an expected truth table (Aryan)
 **Main flow**
 1. The student saves the truth table they typed to a file of their choice.
 2. Later, the student loads that file, and the table appears ready to check.
@@ -90,7 +90,7 @@ Logisim and study. LogiCoach is a learning tool: it does not solve graded labs.
 - The table has a mistake: the app refuses to save it and says which line to fix.
 - The file cannot be read or written: the app says so and nothing changes.
 
-### Use Case 4: Set up the AI connection (Member 2, draft)
+### Use Case 4: Set up the AI connection (Arian, draft)
 **Main flow**
 1. The student enters an API key for an AI provider and saves it.
 2. The student tests the connection and sees "Connected" or a plain explanation of what failed.
@@ -99,7 +99,7 @@ Logisim and study. LogiCoach is a learning tool: it does not solve graded labs.
 **Alternative flows**
 - No key or a wrong key: AI features fall back to offline behaviour and explain why.
 
-### Use Case 5: Chat with the tutor (Member 3, draft)
+### Use Case 5: Chat with the tutor (Alice, draft)
 **Main flow**
 1. After checking a circuit, the student asks the tutor a question or presses Hint 1, 2 or 3.
 2. The tutor answers with a guiding question or hint that refers to the student's circuit and
@@ -109,7 +109,7 @@ Logisim and study. LogiCoach is a learning tool: it does not solve graded labs.
 - The AI is unavailable: an offline tutor gives rule-based hints, and an "Offline" badge shows.
 - No circuit is open: the tutor answers general digital logic questions.
 
-### Use Case 6: Build a circuit from a description (Member 4, draft)
+### Use Case 6: Build a circuit from a description (Ivy, draft)
 **Main flow**
 1. The student describes a circuit in plain English.
 2. The app shows the generated circuit, its truth table, and a short explanation.
@@ -125,10 +125,10 @@ Logisim and study. LogiCoach is a learning tool: it does not solve graded labs.
 
 | Team Member | MVP Use Case | Status |
 |-------------|--------------|--------|
-| Member 1 | Use Cases 1, 2 and 3: open, check, save and load | Done |
-| Member 2 | Use Case 4: AI connection | Not started |
-| Member 3 | Use Case 5: tutor chat | Not started |
-| Member 4 | Use Case 6: build from a description | Not started |
+| Aryan | Use Cases 1, 2 and 3: open, check, save and load | Done |
+| Arian | Use Case 4: AI connection | Not started |
+| Alice | Use Case 5: tutor chat | Not started |
+| Ivy | Use Case 6: build from a description | Not started |
 
 ---
 
@@ -166,7 +166,7 @@ Class diagram: [`docs/diagrams/entities.puml`](docs/diagrams/entities.puml)
   which the app then verifies itself before showing it.
 - Settings stores the key and tests the connection with a tiny request.
 
-**Status:** not called yet (Member 2 owns the connection). Tests never call the network.
+**Status:** not called yet (Arian owns the connection). Tests never call the network.
 
 **Data persistence:** expected truth tables are saved to and loaded from text files (Use Case 3);
 AI settings will be saved to `data/settings.json` (Use Case 4).
