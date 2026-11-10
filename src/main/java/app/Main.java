@@ -4,7 +4,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
-/** Starts LogiCoach. Run with {@code mvn compile exec:java}. */
+/** Starts LogiCoach on the Swing event thread. */
 public final class Main {
 
     private Main() {
@@ -13,10 +13,7 @@ public final class Main {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             useSystemLookAndFeel();
-            new AppBuilder()
-                    .addCircuitTab()
-                    .build()
-                    .setVisible(true);
+            new AppBuilder(System.getenv()).build().setVisible(true);
         });
     }
 
@@ -24,7 +21,7 @@ public final class Main {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ReflectiveOperationException | UnsupportedLookAndFeelException e) {
-            // The default Swing look works too.
+            // Keep Swing's default look.
         }
     }
 }

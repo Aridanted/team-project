@@ -74,21 +74,62 @@ Template:
   pin labels case-insensitively (it blanks duplicates on load). Logisim ignores floating gate
   inputs by default (`gateUndefined=ignore`); LogiCoach treats them as unknown and warns (W102).
 
-## DD-7: Each feature adds its own tab through its own AppBuilder method
+## DD-7: One logic-only circuit format shared by the app and the AI
+- Date / author: 2026-11-04 / Person 2
+- Context: the tutor must show the AI the student's circuit and the builder must read circuits
+  back from the AI. The `.circ` XML is too large and layout-heavy for prompts.
+- Decision: `entity.design.CircuitDesign` (names, gates, connections; no positions), validated on
+  construction, with JSON conversion kept in `data_access.json.CircuitJsonCodec`. Constants `0`/`1`
+  are allowed so circuits with Logisim constants can be described. Rules: `docs/circuit-json.md`.
+- SOLID / pattern: Single Responsibility (the record validates, the codec converts, the describer
+  translates from `Circuit`); Dependency Rule (no JSON in `entity`).
+- Alternatives considered: sending the `Circuit` entity with net numbers (hard for the AI to read
+  and to produce correctly); a Boolean expression per output (cannot describe the student's
+  actual gates, which the tutor needs).
+
+## DD-8: AI providers behind one interface, combined with decorators
+- Date / author: 2026-11-04 / Person 2
+- Context: two providers (Gemini, Groq), free tiers with rate limits, keys that change while the
+  app runs, and tests that must never use the network.
+- Decision: `LlmClient` interface. `GeminiClient` and `GroqClient` call their REST APIs through an
+  injected `HttpTransport`. `FallbackLlmClient` (tries the next provider), `RateLimitedLlmClient`
+  (one call per 2 s) and `SettingsBackedLlmClient` (rebuilds the chain when saved settings change)
+  wrap them; `UnavailableLlmClient` is the null object for "no key". `LlmClientFactory` builds the
+  chain from a list of `LlmProviderSpec`s, so a new provider is a new client class plus one spec.
+  Errors carry a `Kind` (NO_KEY, NETWORK, RATE_LIMIT, AUTH, BAD_RESPONSE, BLOCKED); messages mask
+  the key.
+- SOLID / pattern: Strategy (providers), Decorator (fallback, rate limit, reloading), Null Object,
+  Factory; Open/Closed (new providers need no factory change); Dependency Inversion (the settings
+  use case tests connections through its own `AiConnectionTester` port, not through `LlmClient`).
+- Alternatives considered: one client with `if (provider == ...)` branches; a vendor SDK (an extra
+  dependency per provider, and harder to fake).
+
+## DD-9: Views update only on the Swing event thread
+- Date / author: 2026-11-04 / Person 2
+- Context: opening files and AI calls run in `SwingWorker`s so the window never freezes, so
+  presenters fire view model changes from background threads.
+- Decision: views register listeners through `view.OnEventThread.listener(...)`, which re-posts
+  the event to the event thread when needed. Presenters stay free of Swing.
+- SOLID / pattern: keeps threading a view concern (Single Responsibility); presenters remain
+  testable without Swing.
+- Alternatives considered: `SwingUtilities.invokeLater` inside presenters (forbidden by the
+  dependency rule, and would tie presenters to Swing).
+
+## DD-10: Each feature tab wired from AppBuilder.build()
 - Date / author: 2026-11-09 / team lead
 - Context: the course asks whoever leads a use case to write the UI that triggers it, and four
   people editing one window class would collide in every merge.
-- Decision: `app.AppBuilder` is the only class that creates concrete objects. Each feature has one
-  public method (`addCircuitTab()`, `addTutorTab()`, ...) that builds its use case, adapters and
-  view and adds a tab. `Main` chains the calls. Views are plain `JPanel`s that only see their
-  controllers and view models.
+- Decision: `app.AppBuilder` is the only class that creates concrete objects. `build()` calls
+  private `addXxxTab()` methods on a `view.MainFrame`. The Circuit tab is fully wired; Tutor and
+  Builder tabs use `PlaceholderView` until their owners replace them. Views are plain `JPanel`s
+  that only see their controllers and view models.
 - SOLID / pattern: Builder; Open/Closed (a new feature is a new method, not an edit to others);
   Single Responsibility (object creation lives in one place, the composition root).
 - Alternatives considered: one person builds every screen (rejected: breaks the course's "lead
-  your use case" rule); a `MainFrame` class that knows every view (rejected: every feature would
-  edit it).
+  your use case" rule); a public chained `addXxxTab()` API on `AppBuilder` called from `Main`
+  (rejected after merge: Alice's `MainFrame` and private tab methods reduce conflicts).
 
-## DD-8: Checkstyle runs in the build, not only in the IDE
+## DD-11: Checkstyle runs in the build, not only in the IDE
 - Date / author: 2026-11-09 / team lead
 - Context: code quality is graded and four people write code in different styles.
 - Decision: `checkstyle.xml` (naming, imports, braces, whitespace, method length 50, complexity
@@ -97,7 +138,7 @@ Template:
 - Alternatives considered: the bundled Sun checks (rejected: hundreds of warnings about final
   parameters and magic numbers, which teaches people to ignore the tool).
 
-## DD-9: Expected truth tables are saved as the text the student typed
+## DD-12: Expected truth tables are saved as the text the student typed
 - Date / author: 2026-11-09 / team lead
 - Context: the project must show data persistence, and students re-check the same circuit many
   times.

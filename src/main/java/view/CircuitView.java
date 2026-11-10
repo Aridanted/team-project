@@ -14,7 +14,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -22,12 +21,14 @@ import java.awt.Font;
 /** Left half of the Circuit tab: the "Open circuit..." button, the drawing and any warnings. */
 public final class CircuitView extends JPanel {
 
+    private static final long serialVersionUID = 1L;
+
     private final ImportCircuitViewModel viewModel;
     private final ImportCircuitController controller;
 
     private final JFileChooser chooser = new JFileChooser();
     private final JLabel title = new JLabel("No circuit open");
-    private final JLabel error = new JLabel(" ");
+    private final JLabel error = Styles.errorLabel();
     private final CircuitCanvas canvas = new CircuitCanvas();
     private final DefaultListModel<String> warnings = new DefaultListModel<>();
 
@@ -40,7 +41,6 @@ public final class CircuitView extends JPanel {
         JButton open = new JButton("Open circuit...");
         open.addActionListener(event -> chooseCircuit());
         title.setFont(title.getFont().deriveFont(Font.BOLD, 14f));
-        error.setForeground(Color.RED.darker());
 
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT));
         toolbar.add(open);
@@ -49,7 +49,7 @@ public final class CircuitView extends JPanel {
         top.add(toolbar, BorderLayout.NORTH);
         top.add(error, BorderLayout.SOUTH);
 
-        canvas.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+        canvas.setBorder(BorderFactory.createLineBorder(Styles.MUTED));
         JScrollPane warningList = new JScrollPane(new JList<>(warnings));
         warningList.setBorder(BorderFactory.createTitledBorder("Warnings"));
         warningList.setPreferredSize(new Dimension(0, 110));
@@ -59,7 +59,8 @@ public final class CircuitView extends JPanel {
         add(warningList, BorderLayout.SOUTH);
         setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
 
-        viewModel.addPropertyChangeListener(event -> showState(viewModel.getState()));
+        viewModel.addPropertyChangeListener(OnEventThread.listener(
+                event -> showState(viewModel.getState())));
     }
 
     private void chooseCircuit() {
@@ -69,12 +70,12 @@ public final class CircuitView extends JPanel {
     }
 
     private void showState(ImportCircuitState state) {
-        error.setText(state.getError().isEmpty() ? " " : state.getError());
+        Styles.setMessage(error, state.getError());
         if (!state.isLoaded()) {
             return;
         }
         title.setText(state.getCircuitName() + "  (" + state.getSummary() + ")");
-        canvas.show(state.getComponents(), state.getWires());
+        canvas.setCircuit(state.getComponents(), state.getWires());
         warnings.clear();
         warnings.addAll(state.getWarnings());
     }

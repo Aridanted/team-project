@@ -8,7 +8,6 @@ import interface_adapter.table_file.TableFileController;
 import interface_adapter.table_file.TableFileState;
 import interface_adapter.table_file.TableFileViewModel;
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -20,22 +19,20 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Right half of the Circuit tab: the expected truth table editor, its Load / Save / Check
  * buttons, and the row-by-row results.
  */
 public final class TruthTableView extends JPanel {
+
+    private static final long serialVersionUID = 1L;
 
     private static final String EXAMPLE = """
             # Type the truth table you expect,
@@ -47,8 +44,6 @@ public final class TruthTableView extends JPanel {
             # Lines starting with # are ignored.
             # X as an output means "don't care".
             """;
-    private static final Color PASS_COLOR = new Color(225, 245, 225);
-    private static final Color FAIL_COLOR = new Color(255, 220, 220);
 
     private final CheckCircuitViewModel checkViewModel;
     private final CheckCircuitController checkController;
@@ -57,10 +52,10 @@ public final class TruthTableView extends JPanel {
 
     private final JFileChooser chooser = new JFileChooser();
     private final JTextArea editor = new JTextArea(EXAMPLE);
-    private final JTable results = new JTable();
+    private final CheckResultsTableModel resultsModel = new CheckResultsTableModel();
+    private final JTable results = new JTable(resultsModel);
     private final JLabel summary = new JLabel(" ");
-    private final JLabel status = new JLabel(" ");
-    private List<ResultRow> shownRows = List.of();
+    private final JLabel status = Styles.errorLabel();
 
     public TruthTableView(CheckCircuitViewModel checkViewModel, CheckCircuitController checkController,
                           TableFileViewModel fileViewModel, TableFileController fileController) {
@@ -71,7 +66,7 @@ public final class TruthTableView extends JPanel {
         this.fileController = fileController;
         chooser.setFileFilter(new FileNameExtensionFilter("Truth tables (*.txt)", "txt"));
 
-        editor.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
+        editor.setFont(Styles.MONOSPACED);
         results.setDefaultRenderer(Object.class, new PassFailRenderer());
         results.setEnabled(false);
         summary.setFont(summary.getFont().deriveFont(Font.BOLD, 14f));
@@ -80,17 +75,29 @@ public final class TruthTableView extends JPanel {
         split.setResizeWeight(0.45);
         add(split, BorderLayout.CENTER);
         add(status, BorderLayout.SOUTH);
-        setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
+        setBorder(Styles.padding());
 
-        checkViewModel.addPropertyChangeListener(event -> showCheck(checkViewModel.getState()));
-        fileViewModel.addPropertyChangeListener(this::showFileResult);
+        checkViewModel.addPropertyChangeListener(OnEventThread.listener(
+                event -> showCheck(checkViewModel.getState())));
+        fileViewModel.addPropertyChangeListener(OnEventThread.listener(this::showFileResult));
     }
 
     /** Forgets the shown results, for example because a different circuit was opened. */
     public void clearResults() {
-        shownRows = List.of();
-        results.setModel(new DefaultTableModel());
-        summary.setText(" ");
+        resultsModel.clear();
+        Styles.setMessage(summary, " ");
+    }
+
+    /**
+     * Replaces the editor text with a label template only if the student has not typed their own
+     * table yet.
+     */
+    public void offerTemplate(String text) {
+        String current = editor.getText();
+        if (current.isBlank() || current.equals(EXAMPLE)) {
+            editor.setText(text);
+            editor.setCaretPosition(0);
+        }
     }
 
     private JPanel editorPanel() {
@@ -107,7 +114,7 @@ public final class TruthTableView extends JPanel {
         buttons.add(check);
 
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Expected truth table"));
+        panel.setBorder(Styles.titled("Expected truth table"));
         panel.add(new JScrollPane(editor), BorderLayout.CENTER);
         panel.add(buttons, BorderLayout.SOUTH);
         return panel;
@@ -115,7 +122,7 @@ public final class TruthTableView extends JPanel {
 
     private JPanel resultsPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Results"));
+        panel.setBorder(Styles.titled("Results"));
         panel.add(summary, BorderLayout.NORTH);
         panel.add(new JScrollPane(results), BorderLayout.CENTER);
         return panel;
@@ -146,12 +153,11 @@ public final class TruthTableView extends JPanel {
             showStatus(state.getError(), true);
             return;
         }
-        shownRows = state.getRows();
-        results.setModel(tableModel(state));
-        summary.setText(state.getSummary());
-        boolean allPassed = shownRows.stream().allMatch(ResultRow::passed);
-        summary.setForeground(allPassed ? new Color(0, 120, 0) : Color.RED.darker());
-        showStatus(" ", false);
+        resultsModel.setResults(state.getInputLabels(), state.getOutputLabels(), state.getRows());
+        boolean allPassed = state.getRows().stream().allMatch(ResultRow::passed);
+        summary.setForeground(allPassed ? Styles.SUCCESS : Styles.ERROR);
+        Styles.setMessage(summary, state.getSummary());
+        showStatus("", false);
     }
 
     private void showFileResult(PropertyChangeEvent event) {
@@ -165,24 +171,8 @@ public final class TruthTableView extends JPanel {
     }
 
     private void showStatus(String text, boolean isError) {
-        status.setText(text);
-        status.setForeground(isError ? Color.RED.darker() : Color.DARK_GRAY);
-    }
-
-    private static DefaultTableModel tableModel(CheckCircuitState state) {
-        List<String> columns = new ArrayList<>(state.getInputLabels());
-        state.getOutputLabels().forEach(label -> columns.add(label + " want"));
-        state.getOutputLabels().forEach(label -> columns.add(label + " got"));
-        columns.add("Result");
-        DefaultTableModel model = new DefaultTableModel(columns.toArray(), 0);
-        for (ResultRow row : state.getRows()) {
-            List<Object> cells = new ArrayList<>(row.inputs());
-            cells.addAll(row.expected());
-            cells.addAll(row.actual());
-            cells.add(row.result());
-            model.addRow(cells.toArray());
-        }
-        return model;
+        status.setForeground(isError ? Styles.ERROR : Styles.MUTED);
+        Styles.setMessage(status, text);
     }
 
     /** Colours passing rows green and failing rows red. */
@@ -194,9 +184,11 @@ public final class TruthTableView extends JPanel {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                        boolean hasFocus, int row, int column) {
             Component cell = super.getTableCellRendererComponent(table, value, false, false, row, column);
-            boolean passed = row < shownRows.size() && shownRows.get(row).passed();
-            cell.setBackground(passed ? PASS_COLOR : FAIL_COLOR);
-            cell.setForeground(Color.BLACK);
+            if (!isSelected) {
+                cell.setBackground(resultsModel.passed(table.convertRowIndexToModel(row))
+                        ? Styles.PASS_ROW : Styles.FAIL_ROW);
+            }
+            cell.setForeground(java.awt.Color.BLACK);
             setHorizontalAlignment(CENTER);
             return cell;
         }

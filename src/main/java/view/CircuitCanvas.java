@@ -6,156 +6,206 @@ import interface_adapter.import_circuit.DrawableWire;
 import javax.swing.JComponent;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.Stroke;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Draws an opened circuit: wires as green lines, gates as labelled boxes, input pins as
- * squares, output pins as circles. The drawing is scaled to fit the panel.
+ * Draws a circuit: wires as lines, gates as labelled boxes, pins as circles with their labels,
+ * constants as small boxes with 0 or 1, unsupported components as dashed boxes. The drawing is
+ * scaled and centred to fit the panel. Reused by the Builder tab.
  */
 public final class CircuitCanvas extends JComponent {
 
-    private static final int PADDING = 30;
-    private static final double MAX_SCALE = 2.0;
-    private static final Color WIRE = new Color(0, 140, 0);
-    private static final Color GATE_FILL = new Color(255, 250, 220);
-    private static final Color PIN_FILL = new Color(220, 235, 255);
+    private static final long serialVersionUID = 1L;
 
-    /** How far a gate's body reaches back from its output point, as Logisim draws it. */
-    private static final Map<String, Integer> GATE_DEPTH = Map.of(
-            "NOT", 30, "BUFFER", 20, "NAND", 60, "NOR", 60, "XOR", 60, "XOR_ONE", 60,
-            "XNOR", 70, "XNOR_ONE", 70);
-    private static final int DEFAULT_GATE_DEPTH = 50;
+    static final int MARGIN = 24;
+    static final double MAX_SCALE = 2.5;
+    private static final int GATE_LENGTH = 50;
+    private static final int GATE_WIDTH = 40;
+    private static final int UNARY_LENGTH = 30;
+    private static final int UNARY_WIDTH = 20;
+    private static final int PIN_RADIUS = 7;
+    private static final int LABEL_ROOM = 60;
 
-    private List<DrawableComponent> components = List.of();
-    private List<DrawableWire> wires = List.of();
+    private static final Color BACKGROUND = Color.WHITE;
+    private static final Color WIRE = new Color(25, 118, 210);
+    private static final Color OUTLINE = new Color(33, 33, 33);
+    private static final Color GATE_FILL = new Color(243, 244, 248);
+    private static final Color PIN_FILL = new Color(255, 248, 225);
+    private static final Color UNSUPPORTED = new Color(176, 0, 32);
+    private static final Font LABEL_FONT = new Font(Font.SANS_SERIF, Font.PLAIN, 11);
 
-    /** Replaces what is drawn. */
-    public void show(List<DrawableComponent> newComponents, List<DrawableWire> newWires) {
-        this.components = List.copyOf(newComponents);
-        this.wires = List.copyOf(newWires);
+    private transient List<DrawableComponent> components = List.of();
+    private transient List<DrawableWire> wires = List.of();
+    private String emptyMessage = "Open a .circ file to see the circuit here.";
+
+    public CircuitCanvas() {
+        setPreferredSize(new Dimension(600, 380));
+        setOpaque(true);
+    }
+
+    public void setCircuit(List<DrawableComponent> components, List<DrawableWire> wires) {
+        this.components = List.copyOf(components);
+        this.wires = List.copyOf(wires);
+        repaint();
+    }
+
+    public void setEmptyMessage(String message) {
+        this.emptyMessage = message;
         repaint();
     }
 
     @Override
     protected void paintComponent(Graphics graphics) {
         Graphics2D g = (Graphics2D) graphics.create();
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setColor(Color.WHITE);
-        g.fillRect(0, 0, getWidth(), getHeight());
-        if (components.isEmpty() && wires.isEmpty()) {
-            g.setColor(Color.GRAY);
-            drawCentered(g, "Open a .circ file to see your circuit here.", getWidth() / 2, getHeight() / 2);
-        } else {
-            fitToPanel(g, drawingBounds());
-            wires.forEach(wire -> drawWire(g, wire));
-            components.forEach(component -> drawComponent(g, component));
+        try {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g.setColor(BACKGROUND);
+            g.fillRect(0, 0, getWidth(), getHeight());
+            if (components.isEmpty() && wires.isEmpty()) {
+                paintEmpty(g);
+                return;
+            }
+            Rectangle bounds = bounds(components, wires);
+            double scale = scale(bounds, getWidth(), getHeight());
+            g.translate((getWidth() - bounds.width * scale) / 2, (getHeight() - bounds.height * scale) / 2);
+            g.scale(scale, scale);
+            g.translate(-bounds.x, -bounds.y);
+            paintWires(g);
+            for (DrawableComponent component : components) {
+                paintComponentShape(g, component);
+            }
+        } finally {
+            g.dispose();
         }
-        g.dispose();
     }
 
-    private void fitToPanel(Graphics2D g, Rectangle bounds) {
-        double availableWidth = getWidth() - 2.0 * PADDING;
-        double availableHeight = getHeight() - 2.0 * PADDING;
-        double scale = Math.min(MAX_SCALE, Math.min(availableWidth / bounds.width, availableHeight / bounds.height));
-        g.translate(PADDING + (availableWidth - bounds.width * scale) / 2,
-                PADDING + (availableHeight - bounds.height * scale) / 2);
-        g.scale(scale, scale);
-        g.translate(-bounds.x, -bounds.y);
-    }
-
-    private Rectangle drawingBounds() {
+    /** @return the area the drawing covers, in circuit coordinates, including labels */
+    static Rectangle bounds(List<DrawableComponent> components, List<DrawableWire> wires) {
         Rectangle bounds = null;
         for (DrawableWire wire : wires) {
-            bounds = union(bounds, new Rectangle(wire.x1(), wire.y1(), 0, 0));
-            bounds = union(bounds, new Rectangle(wire.x2(), wire.y2(), 0, 0));
+            bounds = union(bounds, new Rectangle(Math.min(wire.x1(), wire.x2()), Math.min(wire.y1(), wire.y2()),
+                    Math.abs(wire.x2() - wire.x1()), Math.abs(wire.y2() - wire.y1())));
         }
         for (DrawableComponent component : components) {
-            bounds = union(bounds, body(component));
+            bounds = union(bounds, footprint(component));
         }
-        bounds.grow(PADDING, PADDING);
-        return bounds;
+        return bounds == null ? new Rectangle(0, 0, 1, 1) : bounds;
     }
 
-    private static Rectangle union(Rectangle bounds, Rectangle more) {
-        return bounds == null ? more : bounds.union(more);
+    /** @return how much to enlarge the drawing so it fits {@code width x height} with a margin */
+    static double scale(Rectangle bounds, int width, int height) {
+        double available = Math.max(1, width - 2 * MARGIN);
+        double availableHeight = Math.max(1, height - 2 * MARGIN);
+        double fit = Math.min(available / Math.max(1, bounds.width), availableHeight / Math.max(1, bounds.height));
+        return Math.min(MAX_SCALE, fit);
     }
 
-    private static void drawWire(Graphics2D g, DrawableWire wire) {
-        g.setColor(WIRE);
-        g.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g.drawLine(wire.x1(), wire.y1(), wire.x2(), wire.y2());
+    private static Rectangle union(Rectangle bounds, Rectangle next) {
+        return bounds == null ? next : bounds.union(next);
     }
 
-    private static void drawComponent(Graphics2D g, DrawableComponent component) {
-        Rectangle box = body(component);
-        g.setStroke(new BasicStroke(1.5f));
-        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 10));
-        switch (component.kind()) {
-            case "gate" -> drawBox(g, box, GATE_FILL, gateName(component.detail()));
-            case "input" -> drawBox(g, box, PIN_FILL, "");
-            case "output" -> {
-                g.setColor(PIN_FILL);
-                g.fillOval(box.x, box.y, box.width, box.height);
-                g.setColor(Color.BLACK);
-                g.drawOval(box.x, box.y, box.width, box.height);
-            }
-            case "constant" -> drawBox(g, box, Color.WHITE, component.detail());
-            default -> {
-                g.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10,
-                        new float[] {4, 4}, 0));
-                drawBox(g, box, new Color(235, 235, 235), component.detail());
-            }
-        }
-        if (!component.label().isEmpty()) {
-            g.setColor(Color.BLUE.darker());
-            g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
-            drawCentered(g, component.label(), box.x + box.width / 2, box.y - 8);
-        }
-    }
-
-    private static void drawBox(Graphics2D g, Rectangle box, Color fill, String text) {
-        g.setColor(fill);
-        g.fillRoundRect(box.x, box.y, box.width, box.height, 8, 8);
-        g.setColor(Color.BLACK);
-        g.drawRoundRect(box.x, box.y, box.width, box.height, 8, 8);
-        drawCentered(g, text, box.x + box.width / 2, box.y + box.height / 2);
-    }
-
-    private static void drawCentered(Graphics2D g, String text, int centerX, int centerY) {
-        FontMetrics metrics = g.getFontMetrics();
-        g.drawString(text, centerX - metrics.stringWidth(text) / 2,
-                centerY + (metrics.getAscent() - metrics.getDescent()) / 2);
-    }
-
-    private static String gateName(String gateType) {
-        return gateType.replace("_ONE", "").replace("BUFFER", "BUF");
-    }
-
-    /** The component's outline: it sits behind its connection point, away from where it faces. */
-    private static Rectangle body(DrawableComponent component) {
+    private static Rectangle footprint(DrawableComponent component) {
+        int x = component.x();
+        int y = component.y();
         return switch (component.kind()) {
-            case "gate" -> behind(component, GATE_DEPTH.getOrDefault(component.detail(), DEFAULT_GATE_DEPTH), 40);
-            case "input", "output" -> behind(component, 20, 20);
-            case "constant" -> behind(component, 16, 16);
-            default -> new Rectangle(component.x() - 30, component.y() - 15, 60, 30);
+            case "gate", "unsupported" -> body(component);
+            case "input" -> new Rectangle(x - LABEL_ROOM, y - PIN_RADIUS * 2, LABEL_ROOM + PIN_RADIUS, PIN_RADIUS * 4);
+            case "output" -> new Rectangle(x - PIN_RADIUS, y - PIN_RADIUS * 2, LABEL_ROOM + PIN_RADIUS, PIN_RADIUS * 4);
+            default -> new Rectangle(x - PIN_RADIUS * 2, y - PIN_RADIUS, PIN_RADIUS * 2, PIN_RADIUS * 2);
         };
     }
 
-    private static Rectangle behind(DrawableComponent component, int depth, int breadth) {
+    /** The body of a gate sits behind its output point, which is the component's location. */
+    private static Rectangle body(DrawableComponent component) {
+        boolean unary = "NOT".equals(component.detail()) || "BUFFER".equals(component.detail());
+        int length = unary ? UNARY_LENGTH : GATE_LENGTH;
+        int width = unary ? UNARY_WIDTH : GATE_WIDTH;
         int x = component.x();
         int y = component.y();
         return switch (component.facing()) {
-            case "west" -> new Rectangle(x, y - breadth / 2, depth, breadth);
-            case "north" -> new Rectangle(x - breadth / 2, y, breadth, depth);
-            case "south" -> new Rectangle(x - breadth / 2, y - depth, breadth, depth);
-            default -> new Rectangle(x - depth, y - breadth / 2, depth, breadth);
+            case "west" -> new Rectangle(x, y - width / 2, length, width);
+            case "north" -> new Rectangle(x - width / 2, y, width, length);
+            case "south" -> new Rectangle(x - width / 2, y - length, width, length);
+            default -> new Rectangle(x - length, y - width / 2, length, width);
         };
+    }
+
+    private void paintEmpty(Graphics2D g) {
+        g.setColor(Styles.MUTED);
+        FontMetrics metrics = g.getFontMetrics();
+        int x = (getWidth() - metrics.stringWidth(emptyMessage)) / 2;
+        g.drawString(emptyMessage, Math.max(MARGIN, x), getHeight() / 2);
+    }
+
+    private void paintWires(Graphics2D g) {
+        g.setColor(WIRE);
+        g.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        for (DrawableWire wire : wires) {
+            g.drawLine(wire.x1(), wire.y1(), wire.x2(), wire.y2());
+        }
+    }
+
+    private void paintComponentShape(Graphics2D g, DrawableComponent component) {
+        g.setStroke(new BasicStroke(1.5f));
+        g.setFont(LABEL_FONT);
+        switch (component.kind()) {
+            case "gate" -> paintBox(g, body(component), gateName(component.detail()), GATE_FILL, OUTLINE, null);
+            case "unsupported" -> paintBox(g, body(component), component.detail(), Color.WHITE, UNSUPPORTED,
+                    new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] {4f, 3f}, 0f));
+            case "input" -> paintPin(g, component, true);
+            case "output" -> paintPin(g, component, false);
+            case "constant" -> paintBox(g, footprint(component), component.detail(), GATE_FILL, OUTLINE, null);
+            default -> {
+                // Unknown kinds are not drawn.
+            }
+        }
+    }
+
+    private static void paintBox(Graphics2D g, Rectangle box, String text, Color fill, Color outline, Stroke stroke) {
+        g.setColor(fill);
+        g.fillRoundRect(box.x, box.y, box.width, box.height, 8, 8);
+        g.setColor(outline);
+        Stroke previous = g.getStroke();
+        if (stroke != null) {
+            g.setStroke(stroke);
+        }
+        g.drawRoundRect(box.x, box.y, box.width, box.height, 8, 8);
+        g.setStroke(previous);
+        drawCentred(g, text, box.x + box.width / 2, box.y + box.height / 2);
+    }
+
+    private static void paintPin(Graphics2D g, DrawableComponent pin, boolean input) {
+        int x = pin.x();
+        int y = pin.y();
+        g.setColor(PIN_FILL);
+        g.fillOval(x - PIN_RADIUS, y - PIN_RADIUS, PIN_RADIUS * 2, PIN_RADIUS * 2);
+        g.setColor(OUTLINE);
+        g.drawOval(x - PIN_RADIUS, y - PIN_RADIUS, PIN_RADIUS * 2, PIN_RADIUS * 2);
+        FontMetrics metrics = g.getFontMetrics();
+        int baseline = y + metrics.getAscent() / 2 - 1;
+        if (input) {
+            g.drawString(pin.label(), x - PIN_RADIUS - 4 - metrics.stringWidth(pin.label()), baseline);
+        } else {
+            g.drawString(pin.label(), x + PIN_RADIUS + 4, baseline);
+        }
+    }
+
+    private static void drawCentred(Graphics2D g, String text, int centreX, int centreY) {
+        FontMetrics metrics = g.getFontMetrics();
+        g.drawString(text, centreX - metrics.stringWidth(text) / 2, centreY + metrics.getAscent() / 2 - 1);
+    }
+
+    /** @return a short name for a gate type, for example "XOR1" for XOR_ONE */
+    static String gateName(String type) {
+        return type.replace("_ONE", "1");
     }
 }
