@@ -95,13 +95,15 @@ own small interfaces (add `implements YourInterface` to it).
   smallest complete use case, and the best template to copy.
 - Checkstyle (`checkstyle.xml`) runs in `mvn verify` and in CI.
 
-### 3.8 Alice's `ai-connect` branch (merged)
+### 3.8 Alice's `ai-connect` work (merged in pull request #5)
 - Circuit JSON format (`entity.design`, `docs/circuit-json.md`) and `CircuitJsonCodec`.
 - LLM clients (Gemini, Groq) behind `LlmClient`, with decorator chain for fallback and rate limits.
 - AI settings use case, `JsonSettingsStore`, and the Settings tab.
-- `MainFrame`, shared view helpers (`Styles`, `OnEventThread`, `BackgroundTask`), and Tutor /
-  Builder tabs as `PlaceholderView` panels for Ivy and Arian to replace in `addTutorTab()` /
-  `addBuilderTab()`.
+- `MainFrame` and shared view helpers (`Styles`, `OnEventThread`, `BackgroundTask`).
+- A basic Tutor tab: `use_case.tutor_chat`, `LlmTutorGateway`, `TutorPromptBuilder` and
+  `view.TutorChatView` (free chat with the AI about the open circuit). Still to do from section 6:
+  the Hint 1 / 2 / 3 buttons, the safety filter, and the offline tutor with its fallback.
+- The Builder tab is a `PlaceholderView` for Arian to replace in `addBuilderTab()`.
 
 ### 3.7 Things teammates should reuse
 

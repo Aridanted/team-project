@@ -130,8 +130,8 @@ in Logisim, so that I can study how it is built.
 | Team Member | MVP Use Case | Status |
 |-------------|--------------|--------|
 | Aryan | Use Cases 1, 2 and 3: open, check, save and load | Done |
-| Alice | Use Case 4: AI connection | In progress (branch ai-connect) |
-| Ivy | Use Case 5: tutor chat | In progress (pull request #4) |
+| Alice | Use Case 4: AI connection | Done (pull request #5) |
+| Ivy | Use Case 5: tutor chat | Basic AI chat merged in #5; hint buttons, safety filter and offline tutor still to do |
 | Arian | Use Case 6: build from a description | Not started |
 
 ---

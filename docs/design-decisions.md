@@ -115,7 +115,21 @@ Template:
 - Alternatives considered: `SwingUtilities.invokeLater` inside presenters (forbidden by the
   dependency rule, and would tie presenters to Swing).
 
-## DD-10: Each feature tab wired from AppBuilder.build()
+## DD-10: The tutor reaches the AI through its own port
+- Date / author: 2026-11-05 / Person 2 (merging Person 3's first tutor version)
+- Context: the first tutor returned a fixed reply and sat outside the per-feature packages; the
+  tutor must answer with the AI and see the student's circuit and failing rows.
+- Decision: `use_case.tutor_chat` owns a `TutorGateway` port and a `TutorChatDataAccessInterface`
+  (implemented by `InMemorySessionStore`). `data_access.llm.tutor.LlmTutorGateway` implements the
+  port with `LlmClient`; `TutorPromptBuilder` writes the system prompt with the circuit in the
+  shared JSON format and up to 6 failing rows. The conversation is an immutable `entity.tutor`
+  value that keeps the last 20 messages.
+- SOLID / pattern: Dependency Inversion (the use case never imports `data_access.llm`); Single
+  Responsibility (prompt text, AI call and chat rules are separate classes); Open/Closed (the
+  offline tutor can wrap the same port as a decorator).
+- Alternatives considered: calling `LlmClient` from the interactor (breaks the dependency rule).
+
+## DD-11: Each feature tab wired from AppBuilder.build()
 - Date / author: 2026-11-09 / team lead
 - Context: the course asks whoever leads a use case to write the UI that triggers it, and four
   people editing one window class would collide in every merge.
@@ -129,7 +143,7 @@ Template:
   your use case" rule); a public chained `addXxxTab()` API on `AppBuilder` called from `Main`
   (rejected after merge: Alice's `MainFrame` and private tab methods reduce conflicts).
 
-## DD-11: Checkstyle runs in the build, not only in the IDE
+## DD-12: Checkstyle runs in the build, not only in the IDE
 - Date / author: 2026-11-09 / team lead
 - Context: code quality is graded and four people write code in different styles.
 - Decision: `checkstyle.xml` (naming, imports, braces, whitespace, method length 50, complexity
@@ -138,7 +152,7 @@ Template:
 - Alternatives considered: the bundled Sun checks (rejected: hundreds of warnings about final
   parameters and magic numbers, which teaches people to ignore the tool).
 
-## DD-12: Expected truth tables are saved as the text the student typed
+## DD-13: Expected truth tables are saved as the text the student typed
 - Date / author: 2026-11-09 / team lead
 - Context: the project must show data persistence, and students re-check the same circuit many
   times.

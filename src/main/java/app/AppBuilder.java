@@ -2,6 +2,7 @@ package app;
 
 import data_access.circ.LogisimCircuitParser;
 import data_access.file.TableFileStore;
+import data_access.json.CircuitJsonCodec;
 import data_access.json.JsonSettingsStore;
 import data_access.llm.JdkHttpTransport;
 import data_access.llm.LlmClient;
@@ -10,7 +11,10 @@ import data_access.llm.LlmConnectionTester;
 import data_access.llm.LlmProviders;
 import data_access.llm.RateLimitedLlmClient;
 import data_access.llm.SettingsBackedLlmClient;
+import data_access.llm.tutor.LlmTutorGateway;
+import data_access.llm.tutor.TutorPromptBuilder;
 import data_access.session.InMemorySessionStore;
+import entity.design.CircuitDescriber;
 import entity.settings.AiSettings;
 import entity.simulation.CircuitSimulator;
 import entity.truthtable.TruthTableChecker;
@@ -28,17 +32,23 @@ import interface_adapter.import_circuit.ImportCircuitViewModel;
 import interface_adapter.table_file.TableFileController;
 import interface_adapter.table_file.TableFilePresenter;
 import interface_adapter.table_file.TableFileViewModel;
+import interface_adapter.tutor_chat.TutorChatController;
+import interface_adapter.tutor_chat.TutorChatPresenter;
+import interface_adapter.tutor_chat.TutorChatViewModel;
 import use_case.ai_settings.AiSettingsInteractor;
 import use_case.ai_settings.SettingsStorageException;
 import use_case.check_circuit.CheckCircuitInteractor;
 import use_case.import_circuit.ImportCircuitInteractor;
 import use_case.table_file.TableFileInteractor;
+import use_case.tutor_chat.TutorChatInteractor;
+import use_case.tutor_chat.TutorGateway;
 import view.AiSettingsView;
 import view.CircuitView;
 import view.MainFrame;
 import view.OnEventThread;
 import view.PlaceholderView;
 import view.TruthTableView;
+import view.TutorChatView;
 
 import javax.swing.JSplitPane;
 import java.nio.file.Path;
@@ -115,9 +125,13 @@ public final class AppBuilder {
         frame.addTab("Circuit", split);
     }
 
-    /** Person 3: replace the placeholder with the tutor view, built on {@link #llmClient} and {@link #session}. */
     private void addTutorTab() {
-        frame.addTab("Tutor", new PlaceholderView("The AI tutor chat will appear here."));
+        TutorChatViewModel viewModel = new TutorChatViewModel();
+        TutorGateway tutor = new LlmTutorGateway(llmClient,
+                new TutorPromptBuilder(new CircuitDescriber(), new CircuitJsonCodec()));
+        TutorChatController controller = new TutorChatController(
+                new TutorChatInteractor(session, tutor, new TutorChatPresenter(viewModel)));
+        frame.addTab("Tutor", new TutorChatView(controller, viewModel));
     }
 
     /** Person 4: replace the placeholder with the builder view, built on {@link #llmClient}. */

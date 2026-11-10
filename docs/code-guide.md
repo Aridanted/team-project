@@ -77,23 +77,24 @@ Every feature works this way. Opening a circuit (`import_circuit`) and saving / 
 
 ## Adding your use case: the checklist
 
-Use `table_file` as your template. For a use case called `tutor_chat`:
+Use `table_file` as your template (`tutor_chat` is a bigger example). For a use case called
+`build_circuit`:
 
-1. **`use_case/tutor_chat/`**
-   - `TutorChatInputData` (record): what the user typed or clicked.
-   - `TutorChatInputBoundary` (interface): `void execute(TutorChatInputData)`.
-   - `TutorChatOutputData` (record): what the screen needs, as plain values.
-   - `TutorChatOutputBoundary` (interface): `prepareSuccessView`, `prepareFailView`.
-   - `TutorChatDataAccessInterface` (interface): only the methods *your* interactor needs.
-   - `TutorChatInteractor`: the rules. Takes everything through its constructor.
-2. **`interface_adapter/tutor_chat/`**: `TutorChatController`, `TutorChatPresenter`,
-   `TutorChatState`, `TutorChatViewModel` (extends `interface_adapter.ViewModel`).
+1. **`use_case/build_circuit/`**
+   - `BuildCircuitInputData` (record): what the user typed or clicked.
+   - `BuildCircuitInputBoundary` (interface): `void execute(BuildCircuitInputData)`.
+   - `BuildCircuitOutputData` (record): what the screen needs, as plain values.
+   - `BuildCircuitOutputBoundary` (interface): `prepareSuccessView`, `prepareFailView`.
+   - `BuildCircuitDataAccessInterface` (interface): only the methods *your* interactor needs.
+   - `BuildCircuitInteractor`: the rules. Takes everything through its constructor.
+2. **`interface_adapter/build_circuit/`**: `BuildCircuitController`, `BuildCircuitPresenter`,
+   `BuildCircuitState`, `BuildCircuitViewModel` (extends `interface_adapter.ViewModel`).
 3. **`data_access/...`**: the class that implements your data access interface. If you need the
-   open circuit, add `implements TutorChatDataAccessInterface` to `InMemorySessionStore`.
-4. **`view/TutorView.java`**: a `JPanel` that calls your controller and listens to your view model.
-   Views may only import `interface_adapter` classes.
-5. **`app/AppBuilder.java`**: replace the placeholder in your `addTutorTab()` or `addBuilderTab()`
-   method with your view (wired like the Circuit tab). Don't edit the other private `addXxxTab()`
+   open circuit, add `implements BuildCircuitDataAccessInterface` to `InMemorySessionStore`.
+4. **`view/BuilderView.java`**: a `JPanel` that calls your controller and listens to your view
+   model. Views may only import `interface_adapter` classes.
+5. **`app/AppBuilder.java`**: put your view in your own private `addXxxTab()` method (for the
+   builder, replace the placeholder in `addBuilderTab()`). Don't edit the other `addXxxTab()`
    methods.
 6. **Tests**: test the interactor with small fake classes (see `TableFileInteractorTest`), and
    the presenter by reading the view model's state (see `TableFilePresenterTest`). Never call
