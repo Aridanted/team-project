@@ -9,7 +9,7 @@ import java.awt.*;
 public class TutorChatPanel extends JPanel {
     private final JTextArea chatArea = new JTextArea(15, 30);
     private final JTextField inputField = new JTextField(20);
-    private final JButton sendButton = new JButton("Gửi");
+    private final JButton sendButton = new JButton("Sent");
 
     public TutorChatPanel(TutorController controller, TutorViewModel viewModel) {
         setLayout(new BorderLayout());

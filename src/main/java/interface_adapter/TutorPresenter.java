@@ -16,6 +16,6 @@ public class TutorPresenter implements TutorOutputBoundary {
 
     @Override
     public void prepareFailView(String error) {
-        viewModel.setLastResponse("Lỗi: " + error);
+        viewModel.setLastResponse("Error: " + error);
     }
 }
