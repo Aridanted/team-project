@@ -44,3 +44,19 @@ config.properties
 
 # Project spec (local copy only)
 docs/LogiCoach_Project_Spec.pdf
+
+# Other IDEs (from the course starter repo)
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+.vscode/
