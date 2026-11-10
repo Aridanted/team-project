@@ -11,12 +11,10 @@ working example circuit from a plain-English description.
 
 ### Team Members
 
-| Member | Leads |
-|--------|-------|
-| Aryan | Open and check a circuit; save and load expected truth tables |
-| Alice | AI settings (API key and connection test) |
-| Ivy | AI tutor chat |
-| Arian | AI circuit builder |
+- Aryan Pournajafian: open and check a circuit; save and load expected truth tables
+- Thi Vinh Duy (Alice) Nguyen: AI settings (API key and connection test)
+- Hai Yen (Ivy) Mai: AI tutor chat
+- Arian Mahlooji: AI circuit builder
 
 ---
 
@@ -39,16 +37,22 @@ Logisim and study. LogiCoach is a learning tool: it does not solve graded labs.
 
 ## User Stories
 
-1. **Check my circuit (Aryan).** As a student, I want to open my Logisim circuit and check it
-   against the truth table I expect, so that I can see exactly which rows of my circuit are wrong.
-   I also want to save that truth table and load it later, so I don't have to type it again.
-2. **Connect the AI (Alice).** As a student, I want to enter my AI API key once and test the
-   connection, so that the AI features work without setup every time.
-3. **Get unstuck (Ivy).** As a student with a failing circuit, I want to chat with a tutor
-   that knows my circuit and nudges me without giving the answer, so that I learn to fix it
-   myself.
-4. **See an example (Arian).** As a student, I want to describe a circuit in plain English and
-   get a working circuit I can open in Logisim, so that I can study how it is built.
+### User Story 1: Check my circuit (Aryan)
+As a student, I want to open my Logisim circuit and check it against the truth table I expect, so
+that I can see exactly which rows of my circuit are wrong. I also want to save that truth table
+and load it later, so I don't have to type it again.
+
+### User Story 2: Connect the AI (Alice)
+As a student, I want to enter my AI API key once and test the connection, so that the AI features
+work without setup every time.
+
+### User Story 3: Get unstuck (Ivy)
+As a student with a failing circuit, I want to chat with a tutor that knows my circuit and nudges
+me without giving the answer, so that I learn to fix it myself.
+
+### User Story 4: See an example (Arian)
+As a student, I want to describe a circuit in plain English and get a working circuit I can open
+in Logisim, so that I can study how it is built.
 
 ---
 
@@ -137,18 +141,37 @@ Logisim and study. LogiCoach is a learning tool: it does not solve graded labs.
 Class diagram: [`docs/diagrams/entities.puml`](docs/diagrams/entities.puml)
 ([PNG](docs/diagrams/entities.png)).
 
-- **Circuit**: `name`, `components`, `wires`, `netCount`, `warnings`;
-  `inputPins()`, `outputPins()`, `gates()`, `isSimulatable()`. Immutable and independent of any
-  file format.
-- **CircuitComponent** (sealed): `InputPin`, `OutputPin`, `Constant`, `Gate`,
-  `UnsupportedComponent`. Each has `id`, `location`, `facing`, `inputNets()` and `drivenNet()`.
-  A `Gate` has a `GateType` (AND, OR, NAND, NOR, XOR, XNOR, NOT, BUFFER, ...) and its inputs.
-- **Logic**: `ZERO`, `ONE`, `UNKNOWN` (floating, or "don't care"); `not()`.
-- **TruthTable**: `inputLabels`, `outputLabels`, `rows` (input values, output values).
-- **CheckResult**: the expected table and one `RowResult` per row; `passedRows()`,
-  `allPassed()`, `failingOutputs()`.
-- **CircuitSimulator**, **TruthTableChecker**, **TruthTableGenerator**: compute a circuit's
-  outputs, compare a circuit with a table, and list a circuit's full table.
+### Entity 1: Circuit
+- **Instance variables:** `name`, `components`, `wires`, `netCount`, `warnings`.
+- **Methods:** `inputPins()`, `outputPins()`, `gates()`, `isSimulatable()`.
+- Immutable and independent of any file format.
+
+### Entity 2: CircuitComponent (sealed)
+- **Kinds:** `InputPin`, `OutputPin`, `Constant`, `Gate`, `UnsupportedComponent`.
+- **Methods (all kinds):** `id()`, `location()`, `facing()`, `inputNets()`, `drivenNet()`.
+- A `Gate` has a `GateType` (AND, OR, NAND, NOR, XOR, XNOR, NOT, BUFFER, ...) and its inputs.
+
+### Entity 3: Logic
+- **Values:** `ZERO`, `ONE`, `UNKNOWN` (floating, or "don't care").
+- **Methods:** `not()`, `isKnown()`.
+
+### Entity 4: TruthTable and CheckResult
+- **TruthTable:** `inputLabels`, `outputLabels`, `rows` (input values, output values).
+- **CheckResult:** the expected table and one `RowResult` per row; `passedRows()`, `allPassed()`,
+  `failingOutputs()`.
+
+### Entity 5: CircuitDesign (Alice)
+- **Instance variables:** `name`, `inputs`, `outputs`, `gates` (`GateSpec`: id, type, inputs),
+  `connections`. The JSON shape the AI reads and writes; see
+  [`docs/circuit-json.md`](docs/circuit-json.md).
+
+### Entity 6: AiSettings (Alice)
+- **Instance variables:** `providerOrder` (which AI to try first), `apiKeys` (one per provider).
+- **Methods:** `apiKey(provider)`, `defaults()`.
+
+### Domain services
+`CircuitSimulator`, `TruthTableChecker` and `TruthTableGenerator` compute a circuit's outputs,
+compare a circuit with a table, and list a circuit's full table.
 
 ---
 
@@ -217,5 +240,5 @@ Optional environment variables (for the AI features): `GEMINI_API_KEY`, `GROQ_AP
 - **Design choices** and their reasons: [`docs/design-decisions.md`](docs/design-decisions.md).
   **Who builds what:** [`docs/team-plan.md`](docs/team-plan.md).
 - **Workflow:** nobody pushes to `main`. One branch and one pull request per issue
-  (`Closes #N`), one approving review, CI green. See
+  (`Closes #N`), two approving reviews (see [`TeamContract.md`](TeamContract.md)), CI green. See
   [`.github/pull_request_template.md`](.github/pull_request_template.md).

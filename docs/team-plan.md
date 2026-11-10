@@ -28,7 +28,7 @@ The course says whoever leads a use case writes "the part of the UI that allows 
 trigger the Use Case" and its update afterwards, so **everyone builds the tab for their own use
 case**. Each tab is added by its own `addXxxTab()` method in `app.AppBuilder`.
 
-Reviews rotate: **Aryan reviews Alice, Alice reviews Ivy, Ivy reviews Arian, Arian reviews Aryan.**
+Every pull request needs **two** approving reviews (`TeamContract.md`). First reviewer by rotation: **Aryan reviews Alice, Alice reviews Ivy, Ivy reviews Arian, Arian reviews Aryan**; the second is whoever is free. Team chat: the Instagram group.
 
 ---
 
@@ -128,7 +128,7 @@ Circuit fromFile = new LogisimCircuitParser().load("/path/to/file.circ");
 ## 4. Rules for everyone
 
 1. **Never push to `main`.** One branch per issue (`feature/<issue#>-short-name`), one pull
-   request, `Closes #<issue#>` in the description, one approving review, CI green.
+   request, `Closes #<issue#>` in the description, two approving reviews, CI green.
 2. **Run `mvn verify` before every push.** It runs Checkstyle and every test, including the
    dependency rule test. CI runs the same command.
 3. **SOLID is the grade.** Small classes with one job; depend on interfaces you own; inject
