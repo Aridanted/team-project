@@ -73,3 +73,58 @@ Template:
 - Notes: Logisim connects a wire end or a port that lies on another wire's interior, and treats
   pin labels case-insensitively (it blanks duplicates on load). Logisim ignores floating gate
   inputs by default (`gateUndefined=ignore`); LogiCoach treats them as unknown and warns (W102).
+
+## DD-7: One logic-only circuit format shared by the app and the AI
+- Date / author: 2026-11-04 / Person 2
+- Context: the tutor must show the AI the student's circuit and the builder must read circuits
+  back from the AI. The `.circ` XML is too large and layout-heavy for prompts.
+- Decision: `entity.design.CircuitDesign` (names, gates, connections; no positions), validated on
+  construction, with JSON conversion kept in `data_access.json.CircuitJsonCodec`. Constants `0`/`1`
+  are allowed so circuits with Logisim constants can be described. Rules: `docs/circuit-json.md`.
+- SOLID / pattern: Single Responsibility (the record validates, the codec converts, the describer
+  translates from `Circuit`); Dependency Rule (no JSON in `entity`).
+- Alternatives considered: sending the `Circuit` entity with net numbers (hard for the AI to read
+  and to produce correctly); a Boolean expression per output (cannot describe the student's
+  actual gates, which the tutor needs).
+
+## DD-8: AI providers behind one interface, combined with decorators
+- Date / author: 2026-11-04 / Person 2
+- Context: two providers (Gemini, Groq), free tiers with rate limits, keys that change while the
+  app runs, and tests that must never use the network.
+- Decision: `LlmClient` interface. `GeminiClient` and `GroqClient` call their REST APIs through an
+  injected `HttpTransport`. `FallbackLlmClient` (tries the next provider), `RateLimitedLlmClient`
+  (one call per 2 s) and `SettingsBackedLlmClient` (rebuilds the chain when saved settings change)
+  wrap them; `UnavailableLlmClient` is the null object for "no key". `LlmClientFactory` builds the
+  chain from a list of `LlmProviderSpec`s, so a new provider is a new client class plus one spec.
+  Errors carry a `Kind` (NO_KEY, NETWORK, RATE_LIMIT, AUTH, BAD_RESPONSE, BLOCKED); messages mask
+  the key.
+- SOLID / pattern: Strategy (providers), Decorator (fallback, rate limit, reloading), Null Object,
+  Factory; Open/Closed (new providers need no factory change); Dependency Inversion (the settings
+  use case tests connections through its own `AiConnectionTester` port, not through `LlmClient`).
+- Alternatives considered: one client with `if (provider == ...)` branches; a vendor SDK (an extra
+  dependency per provider, and harder to fake).
+
+## DD-9: Views update only on the Swing event thread
+- Date / author: 2026-11-04 / Person 2
+- Context: opening files and AI calls run in `SwingWorker`s so the window never freezes, so
+  presenters fire view model changes from background threads.
+- Decision: views register listeners through `view.OnEventThread.listener(...)`, which re-posts
+  the event to the event thread when needed. Presenters stay free of Swing.
+- SOLID / pattern: keeps threading a view concern (Single Responsibility); presenters remain
+  testable without Swing.
+- Alternatives considered: `SwingUtilities.invokeLater` inside presenters (forbidden by the
+  dependency rule, and would tie presenters to Swing).
+
+## DD-10: The tutor reaches the AI through its own port
+- Date / author: 2026-11-05 / Person 2 (merging Person 3's first tutor version)
+- Context: the first tutor returned a fixed reply and sat outside the per-feature packages; the
+  tutor must answer with the AI and see the student's circuit and failing rows.
+- Decision: `use_case.tutor_chat` owns a `TutorGateway` port and a `TutorChatDataAccessInterface`
+  (implemented by `InMemorySessionStore`). `data_access.llm.tutor.LlmTutorGateway` implements the
+  port with `LlmClient`; `TutorPromptBuilder` writes the system prompt with the circuit in the
+  shared JSON format and up to 6 failing rows. The conversation is an immutable `entity.tutor`
+  value that keeps the last 20 messages.
+- SOLID / pattern: Dependency Inversion (the use case never imports `data_access.llm`); Single
+  Responsibility (prompt text, AI call and chat rules are separate classes); Open/Closed (the
+  offline tutor can wrap the same port as a decorator).
+- Alternatives considered: calling `LlmClient` from the interactor (breaks the dependency rule).
