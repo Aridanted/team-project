@@ -128,3 +128,38 @@ Template:
   Responsibility (prompt text, AI call and chat rules are separate classes); Open/Closed (the
   offline tutor can wrap the same port as a decorator).
 - Alternatives considered: calling `LlmClient` from the interactor (breaks the dependency rule).
+
+## DD-11: Each feature tab wired from AppBuilder.build()
+- Date / author: 2026-11-09 / team lead
+- Context: the course asks whoever leads a use case to write the UI that triggers it, and four
+  people editing one window class would collide in every merge.
+- Decision: `app.AppBuilder` is the only class that creates concrete objects. `build()` calls
+  private `addXxxTab()` methods on a `view.MainFrame`. The Circuit tab is fully wired; Tutor and
+  Builder tabs use `PlaceholderView` until their owners replace them. Views are plain `JPanel`s
+  that only see their controllers and view models.
+- SOLID / pattern: Builder; Open/Closed (a new feature is a new method, not an edit to others);
+  Single Responsibility (object creation lives in one place, the composition root).
+- Alternatives considered: one person builds every screen (rejected: breaks the course's "lead
+  your use case" rule); a public chained `addXxxTab()` API on `AppBuilder` called from `Main`
+  (rejected after merge: Alice's `MainFrame` and private tab methods reduce conflicts).
+
+## DD-12: Checkstyle runs in the build, not only in the IDE
+- Date / author: 2026-11-09 / team lead
+- Context: code quality is graded and four people write code in different styles.
+- Decision: `checkstyle.xml` (naming, imports, braces, whitespace, method length 50, complexity
+  10, Javadoc on public types) runs in the `validate` phase of `mvn verify`, so CI rejects pull
+  requests that break it. The same file can be loaded in IntelliJ's CheckStyle-IDEA plugin.
+- Alternatives considered: the bundled Sun checks (rejected: hundreds of warnings about final
+  parameters and magic numbers, which teaches people to ignore the tool).
+
+## DD-13: Expected truth tables are saved as the text the student typed
+- Date / author: 2026-11-09 / team lead
+- Context: the project must show data persistence, and students re-check the same circuit many
+  times.
+- Decision: the `table_file` use case saves the editor text unchanged (comments included) to a
+  `.txt` file, but only if it parses, so every saved file can be loaded and checked. Files are
+  read and written by `TableFileStore` behind the use case's `TableFileDataAccessInterface`.
+- SOLID / pattern: Dependency Inversion (the use case owns the file interface, so tests use an
+  in-memory fake); Single Responsibility (the format lives in `TruthTableTextFormat` only).
+- Alternatives considered: JSON (rejected: students can't edit it by hand, and the typed format
+  already exists); saving the parsed table (rejected: loses the student's comments).

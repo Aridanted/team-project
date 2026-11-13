@@ -151,7 +151,7 @@ class TruthTableCheckerTest {
         LabelMismatchException ex = assertThrows(LabelMismatchException.class,
                 () -> checker.check(circuit, expected));
 
-        assertEquals("Spec expects inputs {A, Cin} but circuit has {A, B}.", ex.getMessage());
+        assertEquals("Your table has inputs {A, Cin} but the circuit has {A, B}.", ex.getMessage());
         assertFalse(called.get());
     }
 
@@ -169,7 +169,7 @@ class TruthTableCheckerTest {
         LabelMismatchException ex = assertThrows(LabelMismatchException.class,
                 () -> checker.check(circuit, expected));
 
-        assertEquals("Spec expects outputs {Sum, Carry} but circuit has {Cout, Sum}.", ex.getMessage());
+        assertEquals("Your table has outputs {Sum, Carry} but the circuit has {Cout, Sum}.", ex.getMessage());
         assertFalse(called.get());
     }
 

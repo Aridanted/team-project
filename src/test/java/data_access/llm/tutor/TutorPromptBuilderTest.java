@@ -81,7 +81,8 @@ class TutorPromptBuilderTest {
         String prompt = builder.systemPrompt(Optional.of(fullAdder), Optional.of(check));
 
         assertTrue(prompt.contains("The circuit fails 8 of 8 rows"), prompt);
-        assertEquals(TutorPromptBuilder.MAX_FAILING_ROWS, prompt.lines().filter(line -> line.startsWith("- A=")).count());
+        assertEquals(TutorPromptBuilder.MAX_FAILING_ROWS,
+                prompt.lines().filter(line -> line.startsWith("- A=")).count());
     }
 
     @Test

@@ -37,7 +37,8 @@ class CircuitDescriberTest {
     void namesGatesLeftToRightThenTopToBottom() throws NotDescribableException {
         Circuit circuit = new Circuit("order", List.of(
                 new InputPin("a", "A", 0, new Point(0, 0), Orientation.EAST),
-                new Gate("right", GateType.NOT, List.of(new GateInput(1, false)), 2, new Point(200, 0), Orientation.EAST),
+                new Gate("right", GateType.NOT, List.of(new GateInput(1, false)), 2,
+                        new Point(200, 0), Orientation.EAST),
                 new Gate("lowLeft", GateType.NOT, List.of(new GateInput(0, false)), 3, new Point(100, 50),
                         Orientation.EAST),
                 new Gate("highLeft", GateType.NOT, List.of(new GateInput(3, false)), 1, new Point(100, 10),
@@ -84,7 +85,8 @@ class CircuitDescriberTest {
 
     @Test
     void rejectsUnsupportedComponents() {
-        Circuit circuit = CircuitTestFactory.builder("c").input("A").output("Y", "A").unsupported("D Flip-Flop").build();
+        Circuit circuit = CircuitTestFactory.builder("c")
+                .input("A").output("Y", "A").unsupported("D Flip-Flop").build();
 
         assertMessage("does not support: D Flip-Flop", circuit);
     }
