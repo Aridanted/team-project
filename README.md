@@ -123,6 +123,10 @@ in Logisim, so that I can study how it is built.
 - The AI's design is invalid or does not match its own description: the app retries, then
   explains that it could not build the circuit.
 
+The build use case validates the generated design, assembles it into a circuit,
+and computes its truth table. It checks any supplied output expressions against
+the simulated results and allows up to two retries after the first attempt.
+
 ---
 
 ## Minimal Viable Product (MVP)
@@ -132,7 +136,7 @@ in Logisim, so that I can study how it is built.
 | Aryan | Use Cases 1, 2 and 3: open, check, save and load | Done |
 | Alice | Use Case 4: AI connection | Done (pull request #5) |
 | Ivy | Use Case 5: tutor chat | Basic AI chat merged in #5; hint buttons, safety filter and offline tutor still to do |
-| Arian | Use Case 6: build from a description | Not started |
+| Arian | Use Case 6: build from a description | Core build use case implemented. AI generation, the Builder UI, and Logisim export are tracked separately. |
 
 ---
 
