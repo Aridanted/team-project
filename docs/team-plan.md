@@ -86,11 +86,13 @@ outputs: Sum, Cout
 result. Opening another circuit clears the old check. Persons 3 and 4 read from it through their
 own small interfaces (add `implements YourInterface` to it).
 
-### 3.6 The app window and the Circuit tab
+### 3.6 The app window and the Workspace tab
 - `app.Main` starts the app (`mvn compile exec:java`); `app.AppBuilder` creates and connects
   everything. `build()` calls private `addXxxTab()` methods on `view.MainFrame`.
 - `view.CircuitView` (open a `.circ`, drawing via `view.CircuitCanvas`, warnings) and
-  `view.TruthTableView` (table editor, Load / Save / Check, coloured results) share the Circuit tab.
+  `view.TruthTableView` (table editor, Load / Save / Check, coloured results) sit on the left of
+  the Workspace tab, with `view.TutorChatView` on the right and a download bar underneath
+  (`view.WorkspaceView`, DD-14).
 - Save and load expected tables (`use_case.table_file`, `data_access.file.TableFileStore`): the
   smallest complete use case, and the best template to copy.
 - Checkstyle (`checkstyle.xml`) runs in `mvn verify` and in CI.

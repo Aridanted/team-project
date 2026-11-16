@@ -49,8 +49,8 @@ import view.OnEventThread;
 import view.PlaceholderView;
 import view.TruthTableView;
 import view.TutorChatView;
+import view.WorkspaceView;
 
-import javax.swing.JSplitPane;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Map;
@@ -58,7 +58,8 @@ import java.util.Map;
 /**
  * Composition root: the only class that creates concrete classes from every layer. {@link #build()}
  * calls private {@code addXxxTab()} methods on a {@link MainFrame}; teammates replace placeholders
- * for Tutor and Builder without editing each other's tab code.
+ * for Tutor and Builder without editing each other's tab code. The Workspace tab puts the circuit,
+ * truth table and tutor views side by side, each still created by its own code here.
  */
 public final class AppBuilder {
 
@@ -85,14 +86,14 @@ public final class AppBuilder {
     }
 
     public MainFrame build() {
-        addCircuitTab();
-        addTutorTab();
+        addWorkspaceTab();
         addBuilderTab();
         addSettingsTab();
         return frame;
     }
 
-    private void addCircuitTab() {
+    /** The circuit, its expected truth table and the tutor side by side (DD-14). */
+    private void addWorkspaceTab() {
         ImportCircuitViewModel importViewModel = new ImportCircuitViewModel();
         ImportCircuitController importController = new ImportCircuitController(new ImportCircuitInteractor(
                 new LogisimCircuitParser(), session, new ImportCircuitPresenter(importViewModel)));
@@ -120,18 +121,17 @@ public final class AppBuilder {
             }
         }));
 
-        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, circuitView, tableView);
-        split.setResizeWeight(0.55);
-        frame.addTab("Circuit", split);
+        frame.addTab("Workspace", new WorkspaceView(circuitView, tableView, tutorView()));
     }
 
-    private void addTutorTab() {
+    /** Person 3: the tutor chat, shown on the right of the Workspace tab. */
+    private TutorChatView tutorView() {
         TutorChatViewModel viewModel = new TutorChatViewModel();
         TutorGateway tutor = new LlmTutorGateway(llmClient,
                 new TutorPromptBuilder(new CircuitDescriber(), new CircuitJsonCodec()));
         TutorChatController controller = new TutorChatController(
                 new TutorChatInteractor(session, tutor, new TutorChatPresenter(viewModel)));
-        frame.addTab("Tutor", new TutorChatView(controller, viewModel));
+        return new TutorChatView(controller, viewModel);
     }
 
     /** Person 4: replace the placeholder with the builder view, built on {@link #llmClient}. */

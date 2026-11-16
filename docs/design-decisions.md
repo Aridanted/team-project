@@ -163,3 +163,23 @@ Template:
   in-memory fake); Single Responsibility (the format lives in `TruthTableTextFormat` only).
 - Alternatives considered: JSON (rejected: students can't edit it by hand, and the typed format
   already exists); saving the parsed table (rejected: loses the student's comments).
+
+## DD-14: Circuit, truth table and tutor side by side in one Workspace tab
+- Date / author: 2026-11-16 / Alice
+- Context: with separate Circuit and Tutor tabs, students had to switch tabs to look at the
+  circuit while asking the tutor about it. Students also wanted to keep a copy of their work.
+- Decision: `view.WorkspaceView` replaces the Circuit and Tutor tabs. It only arranges the
+  existing views: `CircuitView` above `TruthTableView` on the left (about 62%), `TutorChatView`
+  on the right, both in draggable split panes. `AppBuilder` still creates each view in its own
+  code (`addWorkspaceTab()` for circuit and table, `tutorView()` for the tutor), so DD-11 holds.
+  A `DownloadBar` underneath exports what is on screen: the check results (.csv), the chat
+  (.txt) and a picture of the circuit (.png). Saving the expected truth table is not on the bar:
+  it stays "Save table..." in `TruthTableView`, through the `table_file` use case (DD-13), so
+  there is only one way to save a table and it is validated.
+- SOLID / pattern: Single Responsibility (the bar asks for a file name and writes; each view
+  decides what it exports); Open/Closed (a new export is one more `DownloadBar.Item`).
+  Exports stay in `view` because they write what is already on screen and have no rules to
+  check; anything that must be loadable again belongs in a use case, like `table_file`.
+- Alternatives considered: an export use case per format (no rules to check, so it would add
+  layers without adding value); keeping two tabs (the main complaint); a truth table export on
+  the bar (a second, unvalidated way to save the same file).

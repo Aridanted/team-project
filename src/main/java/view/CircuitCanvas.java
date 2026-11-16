@@ -14,6 +14,7 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
+import java.awt.image.BufferedImage;
 import java.util.List;
 
 /**
@@ -27,6 +28,8 @@ public final class CircuitCanvas extends JComponent {
 
     static final int MARGIN = 24;
     static final double MAX_SCALE = 2.5;
+    static final int EXPORT_SCALE = 2;
+    static final int MAX_EXPORT_SIDE = 4000;
     private static final int GATE_LENGTH = 50;
     private static final int GATE_WIDTH = 40;
     private static final int UNARY_LENGTH = 30;
@@ -62,29 +65,56 @@ public final class CircuitCanvas extends JComponent {
         repaint();
     }
 
+    /** @return whether there is no circuit to draw */
+    public boolean isEmpty() {
+        return components.isEmpty() && wires.isEmpty();
+    }
+
+    /**
+     * Draws the circuit on its own, at {@link #EXPORT_SCALE} times its size, for saving as a picture.
+     * Very large circuits are shrunk so neither side goes past {@link #MAX_EXPORT_SIDE} pixels.
+     */
+    public BufferedImage toImage() {
+        Rectangle bounds = bounds(components, wires);
+        int width = Math.min(MAX_EXPORT_SIDE, bounds.width * EXPORT_SCALE + 2 * MARGIN);
+        int height = Math.min(MAX_EXPORT_SIDE, bounds.height * EXPORT_SCALE + 2 * MARGIN);
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = image.createGraphics();
+        try {
+            paintDrawing(g, width, height);
+        } finally {
+            g.dispose();
+        }
+        return image;
+    }
+
     @Override
     protected void paintComponent(Graphics graphics) {
         Graphics2D g = (Graphics2D) graphics.create();
         try {
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            g.setColor(BACKGROUND);
-            g.fillRect(0, 0, getWidth(), getHeight());
-            if (components.isEmpty() && wires.isEmpty()) {
-                paintEmpty(g);
-                return;
-            }
-            Rectangle bounds = bounds(components, wires);
-            double scale = scale(bounds, getWidth(), getHeight());
-            g.translate((getWidth() - bounds.width * scale) / 2, (getHeight() - bounds.height * scale) / 2);
-            g.scale(scale, scale);
-            g.translate(-bounds.x, -bounds.y);
-            paintWires(g);
-            for (DrawableComponent component : components) {
-                paintComponentShape(g, component);
-            }
+            paintDrawing(g, getWidth(), getHeight());
         } finally {
             g.dispose();
+        }
+    }
+
+    private void paintDrawing(Graphics2D g, int width, int height) {
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g.setColor(BACKGROUND);
+        g.fillRect(0, 0, width, height);
+        if (isEmpty()) {
+            paintEmpty(g, width, height);
+            return;
+        }
+        Rectangle bounds = bounds(components, wires);
+        double scale = scale(bounds, width, height);
+        g.translate((width - bounds.width * scale) / 2, (height - bounds.height * scale) / 2);
+        g.scale(scale, scale);
+        g.translate(-bounds.x, -bounds.y);
+        paintWires(g);
+        for (DrawableComponent component : components) {
+            paintComponentShape(g, component);
         }
     }
 
@@ -139,11 +169,11 @@ public final class CircuitCanvas extends JComponent {
         };
     }
 
-    private void paintEmpty(Graphics2D g) {
+    private void paintEmpty(Graphics2D g, int width, int height) {
         g.setColor(Styles.MUTED);
         FontMetrics metrics = g.getFontMetrics();
-        int x = (getWidth() - metrics.stringWidth(emptyMessage)) / 2;
-        g.drawString(emptyMessage, Math.max(MARGIN, x), getHeight() / 2);
+        int x = (width - metrics.stringWidth(emptyMessage)) / 2;
+        g.drawString(emptyMessage, Math.max(MARGIN, x), height / 2);
     }
 
     private void paintWires(Graphics2D g) {

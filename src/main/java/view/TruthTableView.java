@@ -25,10 +25,11 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
+import java.util.Optional;
 
 /**
- * Right half of the Circuit tab: the expected truth table editor, its Load / Save / Check
- * buttons, and the row-by-row results.
+ * Bottom left of the Workspace tab: the expected truth table editor with its Load / Save / Check
+ * buttons, and the row-by-row results beside it.
  */
 public final class TruthTableView extends JPanel {
 
@@ -71,7 +72,7 @@ public final class TruthTableView extends JPanel {
         results.setEnabled(false);
         summary.setFont(summary.getFont().deriveFont(Font.BOLD, 14f));
 
-        JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, editorPanel(), resultsPanel());
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, editorPanel(), resultsPanel());
         split.setResizeWeight(0.45);
         add(split, BorderLayout.CENTER);
         add(status, BorderLayout.SOUTH);
@@ -98,6 +99,14 @@ public final class TruthTableView extends JPanel {
             editor.setText(text);
             editor.setCaretPosition(0);
         }
+    }
+
+    /**
+     * @return the check results as CSV for the download bar, or empty before the first check. This
+     *         exports what is on screen; saving the expected table itself is "Save table...".
+     */
+    Optional<DownloadBar.Content> resultsDownload() {
+        return resultsModel.hasResults() ? Optional.of(DownloadBar.text(resultsModel.toCsv())) : Optional.empty();
     }
 
     private JPanel editorPanel() {
