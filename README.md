@@ -170,8 +170,9 @@ Class diagram: [`docs/diagrams/entities.puml`](docs/diagrams/entities.puml)
 - **Methods:** `apiKey(provider)`, `defaults()`.
 
 ### Domain services
-`CircuitSimulator`, `TruthTableChecker` and `TruthTableGenerator` compute a circuit's outputs,
+- `CircuitSimulator`, `TruthTableChecker` and `TruthTableGenerator` compute a circuit's outputs,
 compare a circuit with a table, and list a circuit's full table.
+- `entity.expression` parses and evaluates Boolean expressions such as `A & !B | C` and reports syntax errors with zero-based character positions.
 
 ---
 

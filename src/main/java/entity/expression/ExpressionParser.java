@@ -2,6 +2,13 @@ package entity.expression;
 
 /** Converts Boolean expression text into an expression that can be evaluated. */
 public class ExpressionParser {
+    /**
+     * Parses the input into a Boolean expression that can be evaluated.
+     *
+     * @param input the expression text
+     * @return the parsed expression
+     * @throws ExpressionParseException if the input contains invalid syntax
+     */
     public BooleanExpression parse(String input) {
         return new Parser(input).parse();
     }
