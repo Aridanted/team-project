@@ -17,8 +17,9 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.util.Optional;
 
-/** Left half of the Circuit tab: the "Open circuit..." button, the drawing and any warnings. */
+/** Top left of the Workspace tab: the "Open circuit..." button, the drawing and any warnings. */
 public final class CircuitView extends JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -61,6 +62,11 @@ public final class CircuitView extends JPanel {
 
         viewModel.addPropertyChangeListener(OnEventThread.listener(
                 event -> showState(viewModel.getState())));
+    }
+
+    /** @return a picture of the circuit for the download bar, or empty when no circuit is open */
+    Optional<DownloadBar.Content> imageDownload() {
+        return canvas.isEmpty() ? Optional.empty() : Optional.of(DownloadBar.png(canvas.toImage()));
     }
 
     private void chooseCircuit() {

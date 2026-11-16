@@ -47,6 +47,42 @@ final class CheckResultsTableModel extends AbstractTableModel {
         return names;
     }
 
+    /** @return whether there are results to show */
+    boolean hasResults() {
+        return !rows.isEmpty();
+    }
+
+    /** @return the table as CSV: a header line, then one line per row, values quoted when needed */
+    String toCsv() {
+        StringBuilder csv = new StringBuilder();
+        csvLine(csv, columnNames());
+        for (int row = 0; row < getRowCount(); row++) {
+            List<String> values = new ArrayList<>();
+            for (int column = 0; column < getColumnCount(); column++) {
+                values.add(String.valueOf(getValueAt(row, column)));
+            }
+            csvLine(csv, values);
+        }
+        return csv.toString();
+    }
+
+    private static void csvLine(StringBuilder csv, List<String> values) {
+        for (int i = 0; i < values.size(); i++) {
+            if (i > 0) {
+                csv.append(',');
+            }
+            csv.append(csvValue(values.get(i)));
+        }
+        csv.append('\n');
+    }
+
+    static String csvValue(String value) {
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return '"' + value.replace("\"", "\"\"") + '"';
+        }
+        return value;
+    }
+
     @Override
     public int getRowCount() {
         return rows.size();
