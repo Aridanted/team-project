@@ -78,6 +78,6 @@ public final class BuildCircuitInteractor implements BuildCircuitInputBoundary {
         Circuit circuit = assembler.assemble(design);
         TruthTable table = truthTableGenerator.generate(circuit);
         expressionVerifier.verify(generated.outputExpressions(), table);
-        return new BuildCircuitOutputData(design, circuit, table);
+        return new BuildCircuitOutputData(design, circuit, table, generated.explanation());
     }
 }
