@@ -61,6 +61,23 @@ class BuildCircuitAdaptersTest {
         assertEquals(expected, events.getFirst().getNewValue());
     }
 
+    @Test
+    void presenterPublishesTheExplanation() {
+        BuildCircuitViewModel viewModel = new BuildCircuitViewModel();
+        BuildCircuitPresenter presenter = new BuildCircuitPresenter(viewModel, new TruthTableTextFormat());
+        BuildCircuitOutputData original = passThroughResult();
+        String explanation = "This circuit connects A directly to Y. The output follows the input.";
+
+        presenter.prepareSuccessView(new BuildCircuitOutputData(original.design(),
+                original.circuit(), original.truthTable(), explanation));
+
+        assertEquals(explanation, viewModel.getState().explanation());
+
+        presenter.prepareFailView("Could not build a circuit.");
+
+        assertEquals("", viewModel.getState().explanation());
+    }
+
     private static BuildCircuitOutputData passThroughResult() {
         CircuitDesign design = new CircuitDesign("Pass through", List.of("A"), List.of("Y"),
                 List.of(), Map.of("Y", "A"));

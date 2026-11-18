@@ -25,7 +25,8 @@ public final class BuildCircuitPresenter implements BuildCircuitOutputBoundary {
     @Override
     public void prepareSuccessView(BuildCircuitOutputData outputData) {
         String tableText = textFormat.format(outputData.truthTable());
-        publish(new BuildCircuitState(outputData.circuit().name(), tableText, ""));
+        publish(new BuildCircuitState(outputData.circuit().name(), tableText, "",
+                outputData.explanation()));
     }
 
     @Override

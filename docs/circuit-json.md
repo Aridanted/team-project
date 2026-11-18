@@ -29,6 +29,17 @@ wires; the `.circ` writer lays those out. In code it is `entity.design.CircuitDe
 
 Other keys (for example an AI's `explanation`) are ignored when reading.
 
+The AI builder also requests these fields:
+
+| Key | Type | Meaning |
+|-----|------|---------|
+| `explanation` | string | A nonblank explanation, requested as 2 to 4 sentences. |
+| `expressions` | object, optional | Boolean expressions keyed by output label. |
+
+`LlmDesignGenerator` reads these additional fields. `CircuitJsonCodec` reads
+the circuit structure and ignores additional keys. Supplied expressions are
+checked against the simulated truth table by the build use case.
+
 ## Rules
 
 - **Names** (input labels, output labels, gate ids): a letter, then letters, digits or `_`, at

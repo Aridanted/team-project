@@ -127,6 +127,11 @@ The build use case validates the generated design, assembles it into a circuit,
 and computes its truth table. It checks any supplied output expressions against
 the simulated results and allows up to two retries after the first attempt.
 
+The AI design generator requests a circuit in the shared JSON format with a
+short explanation and optional output expressions. It reads the circuit using
+`CircuitJsonCodec` and passes the explanation through to the Builder state.
+Tests use `FakeLlmClient`.
+
 ---
 
 ## Minimal Viable Product (MVP)

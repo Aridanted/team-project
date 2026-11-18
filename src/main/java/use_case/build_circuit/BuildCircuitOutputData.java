@@ -10,6 +10,19 @@ import entity.truthtable.TruthTable;
  * @param design the validated design
  * @param circuit the assembled circuit
  * @param truthTable the simulated truth table
+ * @param explanation the explanation accompanying the design
  */
-public record BuildCircuitOutputData(CircuitDesign design, Circuit circuit, TruthTable truthTable) {
+public record BuildCircuitOutputData(CircuitDesign design, Circuit circuit, TruthTable truthTable,
+                                     String explanation) {
+
+    /**
+     * Creates a build result without an explanation.
+     *
+     * @param design the validated design
+     * @param circuit the assembled circuit
+     * @param truthTable the simulated truth table
+     */
+    public BuildCircuitOutputData(CircuitDesign design, Circuit circuit, TruthTable truthTable) {
+        this(design, circuit, truthTable, "");
+    }
 }
