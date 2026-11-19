@@ -1,0 +1,37 @@
+@startuml check-circuit-sequence
+!pragma layout smetana
+title Student presses "Check"
+
+actor Student
+participant TruthTableView
+participant CheckCircuitController
+participant CheckCircuitInteractor
+participant InMemorySessionStore
+participant TruthTableTextFormat
+participant TruthTableChecker
+participant CheckCircuitPresenter
+participant CheckCircuitViewModel
+
+Student -> TruthTableView : types table, clicks Check
+TruthTableView -> CheckCircuitController : execute(tableText)
+CheckCircuitController -> CheckCircuitInteractor : execute(CheckCircuitInputData)
+CheckCircuitInteractor -> InMemorySessionStore : getCurrentCircuit()
+InMemorySessionStore --> CheckCircuitInteractor : circuit
+CheckCircuitInteractor -> TruthTableTextFormat : parse(tableText)
+TruthTableTextFormat --> CheckCircuitInteractor : expected TruthTable
+CheckCircuitInteractor -> TruthTableChecker : check(circuit, expected)
+TruthTableChecker --> CheckCircuitInteractor : CheckResult
+CheckCircuitInteractor -> InMemorySessionStore : setLastCheck(result)
+CheckCircuitInteractor -> CheckCircuitPresenter : prepareSuccessView(outputData)
+CheckCircuitPresenter -> CheckCircuitViewModel : setState(rows, "3/4 rows pass.")
+CheckCircuitPresenter -> CheckCircuitViewModel : firePropertyChanged()
+CheckCircuitViewModel -> TruthTableView : propertyChange
+TruthTableView -> Student : PASS / FAIL table
+
+alt no circuit open, malformed table, or labels do not match
+  CheckCircuitInteractor -> CheckCircuitPresenter : prepareFailView(message)
+  CheckCircuitPresenter -> CheckCircuitViewModel : error = message
+  CheckCircuitViewModel -> TruthTableView : propertyChange
+  TruthTableView -> Student : red error message
+end
+@enduml

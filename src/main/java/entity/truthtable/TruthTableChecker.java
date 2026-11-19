@@ -37,36 +37,40 @@ public final class TruthTableChecker {
         validateLabelSet("inputs", expected.inputLabels(), circuitInputLabels);
         validateLabelSet("outputs", expected.outputLabels(), circuitOutputLabels);
 
-        Map<String, String> specInputToCircuit = labelMap(expected.inputLabels(), circuitInputLabels);
-        Map<String, String> specOutputToCircuit = labelMap(expected.outputLabels(), circuitOutputLabels);
+        // The student may type labels in any case ("sum" for "Sum"), so translate to the circuit's.
+        Map<String, String> inputLabelInCircuit = labelMap(expected.inputLabels(), circuitInputLabels);
+        Map<String, String> outputLabelInCircuit = labelMap(expected.outputLabels(), circuitOutputLabels);
 
         List<CheckResult.RowResult> rowResults = new ArrayList<>();
         for (int i = 0; i < expected.rows().size(); i++) {
-            TruthTable.Row row = expected.rows().get(i);
-            Map<String, Logic> inputsByCircuitLabel = new HashMap<>();
-            for (int j = 0; j < expected.inputLabels().size(); j++) {
-                String specLabel = expected.inputLabels().get(j);
-                inputsByCircuitLabel.put(specInputToCircuit.get(specLabel), row.inputs().get(j));
-            }
-
-            Map<String, Logic> evaluated = evaluator.evaluate(circuit, inputsByCircuitLabel);
-
-            List<Logic> actual = new ArrayList<>();
-            List<String> failingOutputs = new ArrayList<>();
-            for (int j = 0; j < expected.outputLabels().size(); j++) {
-                String specOutputLabel = expected.outputLabels().get(j);
-                Logic expectedValue = row.outputs().get(j);
-                Logic actualValue = evaluated.get(specOutputToCircuit.get(specOutputLabel));
-                actual.add(actualValue);
-                if (expectedValue.isKnown() && expectedValue != actualValue) {
-                    failingOutputs.add(specOutputLabel);
-                }
-            }
-
-            rowResults.add(new CheckResult.RowResult(i, row.inputs(), row.outputs(), actual, failingOutputs));
+            rowResults.add(checkRow(circuit, expected, i, inputLabelInCircuit, outputLabelInCircuit));
         }
-
         return new CheckResult(expected, rowResults);
+    }
+
+    private CheckResult.RowResult checkRow(Circuit circuit, TruthTable expected, int index,
+                                           Map<String, String> inputLabelInCircuit,
+                                           Map<String, String> outputLabelInCircuit)
+            throws NotSimulatableException {
+        TruthTable.Row row = expected.rows().get(index);
+        Map<String, Logic> inputs = new HashMap<>();
+        for (int j = 0; j < expected.inputLabels().size(); j++) {
+            inputs.put(inputLabelInCircuit.get(expected.inputLabels().get(j)), row.inputs().get(j));
+        }
+        Map<String, Logic> outputs = evaluator.evaluate(circuit, inputs);
+
+        List<Logic> actual = new ArrayList<>();
+        List<String> failingOutputs = new ArrayList<>();
+        for (int j = 0; j < expected.outputLabels().size(); j++) {
+            String label = expected.outputLabels().get(j);
+            Logic expectedValue = row.outputs().get(j);
+            Logic actualValue = outputs.get(outputLabelInCircuit.get(label));
+            actual.add(actualValue);
+            if (expectedValue.isKnown() && expectedValue != actualValue) {
+                failingOutputs.add(label);
+            }
+        }
+        return new CheckResult.RowResult(index, row.inputs(), row.outputs(), actual, failingOutputs);
     }
 
     private static void validateLabelSet(String kind, List<String> specLabels, List<String> circuitLabels)
@@ -78,8 +82,8 @@ public final class TruthTableChecker {
                 .map(label -> label.toLowerCase(Locale.ROOT))
                 .collect(Collectors.toSet());
         if (!specSet.equals(circuitSet)) {
-            throw new LabelMismatchException("Spec expects " + kind + " {"
-                    + String.join(", ", specLabels) + "} but circuit has {"
+            throw new LabelMismatchException("Your table has " + kind + " {"
+                    + String.join(", ", specLabels) + "} but the circuit has {"
                     + String.join(", ", circuitLabels) + "}.");
         }
     }

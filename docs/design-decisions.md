@@ -73,3 +73,113 @@ Template:
 - Notes: Logisim connects a wire end or a port that lies on another wire's interior, and treats
   pin labels case-insensitively (it blanks duplicates on load). Logisim ignores floating gate
   inputs by default (`gateUndefined=ignore`); LogiCoach treats them as unknown and warns (W102).
+
+## DD-7: One logic-only circuit format shared by the app and the AI
+- Date / author: 2026-11-04 / Person 2
+- Context: the tutor must show the AI the student's circuit and the builder must read circuits
+  back from the AI. The `.circ` XML is too large and layout-heavy for prompts.
+- Decision: `entity.design.CircuitDesign` (names, gates, connections; no positions), validated on
+  construction, with JSON conversion kept in `data_access.json.CircuitJsonCodec`. Constants `0`/`1`
+  are allowed so circuits with Logisim constants can be described. Rules: `docs/circuit-json.md`.
+- SOLID / pattern: Single Responsibility (the record validates, the codec converts, the describer
+  translates from `Circuit`); Dependency Rule (no JSON in `entity`).
+- Alternatives considered: sending the `Circuit` entity with net numbers (hard for the AI to read
+  and to produce correctly); a Boolean expression per output (cannot describe the student's
+  actual gates, which the tutor needs).
+
+## DD-8: AI providers behind one interface, combined with decorators
+- Date / author: 2026-11-04 / Person 2
+- Context: two providers (Gemini, Groq), free tiers with rate limits, keys that change while the
+  app runs, and tests that must never use the network.
+- Decision: `LlmClient` interface. `GeminiClient` and `GroqClient` call their REST APIs through an
+  injected `HttpTransport`. `FallbackLlmClient` (tries the next provider), `RateLimitedLlmClient`
+  (one call per 2 s) and `SettingsBackedLlmClient` (rebuilds the chain when saved settings change)
+  wrap them; `UnavailableLlmClient` is the null object for "no key". `LlmClientFactory` builds the
+  chain from a list of `LlmProviderSpec`s, so a new provider is a new client class plus one spec.
+  Errors carry a `Kind` (NO_KEY, NETWORK, RATE_LIMIT, AUTH, BAD_RESPONSE, BLOCKED); messages mask
+  the key.
+- SOLID / pattern: Strategy (providers), Decorator (fallback, rate limit, reloading), Null Object,
+  Factory; Open/Closed (new providers need no factory change); Dependency Inversion (the settings
+  use case tests connections through its own `AiConnectionTester` port, not through `LlmClient`).
+- Alternatives considered: one client with `if (provider == ...)` branches; a vendor SDK (an extra
+  dependency per provider, and harder to fake).
+
+## DD-9: Views update only on the Swing event thread
+- Date / author: 2026-11-04 / Person 2
+- Context: opening files and AI calls run in `SwingWorker`s so the window never freezes, so
+  presenters fire view model changes from background threads.
+- Decision: views register listeners through `view.OnEventThread.listener(...)`, which re-posts
+  the event to the event thread when needed. Presenters stay free of Swing.
+- SOLID / pattern: keeps threading a view concern (Single Responsibility); presenters remain
+  testable without Swing.
+- Alternatives considered: `SwingUtilities.invokeLater` inside presenters (forbidden by the
+  dependency rule, and would tie presenters to Swing).
+
+## DD-10: The tutor reaches the AI through its own port
+- Date / author: 2026-11-05 / Person 2 (merging Person 3's first tutor version)
+- Context: the first tutor returned a fixed reply and sat outside the per-feature packages; the
+  tutor must answer with the AI and see the student's circuit and failing rows.
+- Decision: `use_case.tutor_chat` owns a `TutorGateway` port and a `TutorChatDataAccessInterface`
+  (implemented by `InMemorySessionStore`). `data_access.llm.tutor.LlmTutorGateway` implements the
+  port with `LlmClient`; `TutorPromptBuilder` writes the system prompt with the circuit in the
+  shared JSON format and up to 6 failing rows. The conversation is an immutable `entity.tutor`
+  value that keeps the last 20 messages.
+- SOLID / pattern: Dependency Inversion (the use case never imports `data_access.llm`); Single
+  Responsibility (prompt text, AI call and chat rules are separate classes); Open/Closed (the
+  offline tutor can wrap the same port as a decorator).
+- Alternatives considered: calling `LlmClient` from the interactor (breaks the dependency rule).
+
+## DD-11: Each feature tab wired from AppBuilder.build()
+- Date / author: 2026-11-09 / team lead
+- Context: the course asks whoever leads a use case to write the UI that triggers it, and four
+  people editing one window class would collide in every merge.
+- Decision: `app.AppBuilder` is the only class that creates concrete objects. `build()` calls
+  private `addXxxTab()` methods on a `view.MainFrame`. The Circuit tab is fully wired; Tutor and
+  Builder tabs use `PlaceholderView` until their owners replace them. Views are plain `JPanel`s
+  that only see their controllers and view models.
+- SOLID / pattern: Builder; Open/Closed (a new feature is a new method, not an edit to others);
+  Single Responsibility (object creation lives in one place, the composition root).
+- Alternatives considered: one person builds every screen (rejected: breaks the course's "lead
+  your use case" rule); a public chained `addXxxTab()` API on `AppBuilder` called from `Main`
+  (rejected after merge: Alice's `MainFrame` and private tab methods reduce conflicts).
+
+## DD-12: Checkstyle runs in the build, not only in the IDE
+- Date / author: 2026-11-09 / team lead
+- Context: code quality is graded and four people write code in different styles.
+- Decision: `checkstyle.xml` (naming, imports, braces, whitespace, method length 50, complexity
+  10, Javadoc on public types) runs in the `validate` phase of `mvn verify`, so CI rejects pull
+  requests that break it. The same file can be loaded in IntelliJ's CheckStyle-IDEA plugin.
+- Alternatives considered: the bundled Sun checks (rejected: hundreds of warnings about final
+  parameters and magic numbers, which teaches people to ignore the tool).
+
+## DD-13: Expected truth tables are saved as the text the student typed
+- Date / author: 2026-11-09 / team lead
+- Context: the project must show data persistence, and students re-check the same circuit many
+  times.
+- Decision: the `table_file` use case saves the editor text unchanged (comments included) to a
+  `.txt` file, but only if it parses, so every saved file can be loaded and checked. Files are
+  read and written by `TableFileStore` behind the use case's `TableFileDataAccessInterface`.
+- SOLID / pattern: Dependency Inversion (the use case owns the file interface, so tests use an
+  in-memory fake); Single Responsibility (the format lives in `TruthTableTextFormat` only).
+- Alternatives considered: JSON (rejected: students can't edit it by hand, and the typed format
+  already exists); saving the parsed table (rejected: loses the student's comments).
+
+## DD-14: Circuit, truth table and tutor side by side in one Workspace tab
+- Date / author: 2026-11-16 / Alice
+- Context: with separate Circuit and Tutor tabs, students had to switch tabs to look at the
+  circuit while asking the tutor about it. Students also wanted to keep a copy of their work.
+- Decision: `view.WorkspaceView` replaces the Circuit and Tutor tabs. It only arranges the
+  existing views: `CircuitView` above `TruthTableView` on the left (about 62%), `TutorChatView`
+  on the right, both in draggable split panes. `AppBuilder` still creates each view in its own
+  code (`addWorkspaceTab()` for circuit and table, `tutorView()` for the tutor), so DD-11 holds.
+  A `DownloadBar` underneath exports what is on screen: the check results (.csv), the chat
+  (.txt) and a picture of the circuit (.png). Saving the expected truth table is not on the bar:
+  it stays "Save table..." in `TruthTableView`, through the `table_file` use case (DD-13), so
+  there is only one way to save a table and it is validated.
+- SOLID / pattern: Single Responsibility (the bar asks for a file name and writes; each view
+  decides what it exports); Open/Closed (a new export is one more `DownloadBar.Item`).
+  Exports stay in `view` because they write what is already on screen and have no rules to
+  check; anything that must be loadable again belongs in a use case, like `table_file`.
+- Alternatives considered: an export use case per format (no rules to check, so it would add
+  layers without adding value); keeping two tabs (the main complaint); a truth table export on
+  the bar (a second, unvalidated way to save the same file).

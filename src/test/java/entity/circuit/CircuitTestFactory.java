@@ -54,6 +54,7 @@ public final class CircuitTestFactory {
                 .build();
     }
 
+    /** Adds components one call at a time; see the class comment for an example. */
     public static final class Builder {
         private final String name;
         private final List<CircuitComponent> components = new ArrayList<>();

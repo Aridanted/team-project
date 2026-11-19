@@ -1,0 +1,107 @@
+@startuml entities
+!pragma layout smetana
+title Core entities
+
+skinparam classAttributeIconSize 0
+hide empty members
+
+class Circuit <<record>> {
+  name: String
+  components: List<CircuitComponent>
+  wires: List<Wire>
+  netCount: int
+  warnings: List<CircuitWarning>
+  +inputPins(): List<InputPin>
+  +outputPins(): List<OutputPin>
+  +gates(): List<Gate>
+  +isSimulatable(): boolean
+}
+
+interface CircuitComponent <<sealed>> {
+  +id(): String
+  +location(): Point
+  +facing(): Orientation
+  +inputNets(): List<Integer>
+  +drivenNet(): OptionalInt
+}
+
+interface Pin <<sealed>> {
+  +label(): String
+  +net(): int
+}
+
+class InputPin <<record>>
+class OutputPin <<record>>
+class Constant <<record>> {
+  value: boolean
+  net: int
+}
+class Gate <<record>> {
+  type: GateType
+  inputs: List<GateInput>
+  outputNet: int
+}
+class UnsupportedComponent <<record>> {
+  name: String
+  reason: String
+}
+
+enum GateType {
+  AND
+  OR
+  NAND
+  NOR
+  XOR
+  XNOR
+  NOT
+  BUFFER
+  ...
+}
+
+enum Logic {
+  ZERO
+  ONE
+  UNKNOWN
+  +not(): Logic
+}
+
+class TruthTable <<record>> {
+  inputLabels: List<String>
+  outputLabels: List<String>
+  rows: List<Row>
+}
+
+class CheckResult <<record>> {
+  expected: TruthTable
+  rows: List<RowResult>
+  +passedRows(): int
+  +allPassed(): boolean
+  +failingOutputs(): List<String>
+}
+
+interface CircuitEvaluator {
+  +evaluate(Circuit, Map<String, Logic>): Map<String, Logic>
+}
+class CircuitSimulator
+class TruthTableChecker {
+  +check(Circuit, TruthTable): CheckResult
+}
+class TruthTableGenerator {
+  +generate(Circuit): TruthTable
+}
+
+Circuit *-- "*" CircuitComponent
+CircuitComponent <|-- Pin
+Pin <|.. InputPin
+Pin <|.. OutputPin
+CircuitComponent <|.. Constant
+CircuitComponent <|.. Gate
+CircuitComponent <|.. UnsupportedComponent
+Gate --> GateType
+CircuitSimulator ..|> CircuitEvaluator
+CircuitSimulator ..> Logic
+TruthTableChecker --> CircuitEvaluator
+TruthTableGenerator --> CircuitEvaluator
+TruthTableChecker ..> CheckResult : creates
+CheckResult --> TruthTable
+@enduml

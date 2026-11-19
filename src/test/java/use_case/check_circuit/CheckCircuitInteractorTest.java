@@ -121,7 +121,7 @@ class CheckCircuitInteractorTest {
     @Test
     void reportsLabelMismatch() {
         run(CircuitTestFactory.halfAdder(), "inputs: A, B, Cin\noutputs: Sum, Cout\n0 0 0 | 0 0\n");
-        assertEquals("Spec expects inputs {A, B, Cin} but circuit has {A, B}.", presenter.error);
+        assertEquals("Your table has inputs {A, B, Cin} but the circuit has {A, B}.", presenter.error);
     }
 
     @Test

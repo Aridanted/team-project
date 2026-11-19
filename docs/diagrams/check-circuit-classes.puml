@@ -1,0 +1,71 @@
+@startuml check-circuit-classes
+!pragma layout smetana
+title Check a circuit: classes by Clean Architecture layer
+
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "view (frameworks)" #FDECEC {
+  class TruthTableView
+}
+
+package "interface_adapter" #E8F5E9 {
+  class CheckCircuitController {
+    +execute(tableText: String)
+  }
+  class CheckCircuitPresenter
+  class CheckCircuitViewModel
+  class CheckCircuitState {
+    rows: List<ResultRow>
+    summary: String
+    error: String
+  }
+}
+
+package "use_case.check_circuit" #FFF8E1 {
+  interface CheckCircuitInputBoundary {
+    +execute(CheckCircuitInputData)
+  }
+  class CheckCircuitInteractor
+  interface CheckCircuitOutputBoundary {
+    +prepareSuccessView(CheckCircuitOutputData)
+    +prepareFailView(String)
+  }
+  interface CheckCircuitDataAccessInterface {
+    +getCurrentCircuit(): Optional<Circuit>
+    +setLastCheck(CheckResult)
+  }
+}
+
+package "entity" #E3F2FD {
+  class Circuit
+  class TruthTableTextFormat
+  class TruthTableChecker
+  class CheckResult
+}
+
+package "data_access (frameworks)" #FDECEC {
+  class InMemorySessionStore
+}
+
+TruthTableView --> CheckCircuitController : calls
+TruthTableView ..> CheckCircuitViewModel : listens to
+CheckCircuitController --> CheckCircuitInputBoundary
+CheckCircuitInteractor ..|> CheckCircuitInputBoundary
+CheckCircuitInteractor --> CheckCircuitOutputBoundary
+CheckCircuitInteractor --> CheckCircuitDataAccessInterface
+CheckCircuitInteractor --> TruthTableTextFormat
+CheckCircuitInteractor --> TruthTableChecker
+TruthTableChecker ..> CheckResult : creates
+CheckCircuitPresenter ..|> CheckCircuitOutputBoundary
+CheckCircuitPresenter --> CheckCircuitViewModel
+CheckCircuitViewModel o-- CheckCircuitState
+InMemorySessionStore ..|> CheckCircuitDataAccessInterface
+InMemorySessionStore o-- Circuit
+
+note bottom of InMemorySessionStore
+  Dependency inversion: the use case owns
+  the interface; data_access implements it.
+end note
+@enduml

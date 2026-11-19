@@ -6,7 +6,6 @@ import entity.circuit.CircuitWarning;
 import entity.circuit.Constant;
 import entity.circuit.Gate;
 import entity.circuit.InputPin;
-import entity.circuit.Orientation;
 import entity.circuit.OutputPin;
 import entity.circuit.UnsupportedComponent;
 import entity.circuit.Wire;
@@ -70,65 +69,26 @@ public final class ImportCircuitInteractor implements ImportCircuitInputBoundary
         List<String> warnings = circuit.warnings().stream()
                 .map(CircuitWarning::message)
                 .toList();
-        return new ImportCircuitOutputData(
-                circuit.name(),
-                inputLabels,
-                outputLabels,
-                components,
-                wires,
-                warnings,
-                circuit.isSimulatable());
+        return new ImportCircuitOutputData(circuit.name(), inputLabels, outputLabels, components, wires,
+                warnings, circuit.isSimulatable());
     }
 
     private static ComponentSummary toComponentSummary(CircuitComponent component) {
         return switch (component) {
-            case InputPin pin -> new ComponentSummary(
-                    "input",
-                    "",
-                    pin.label(),
-                    pin.location().x(),
-                    pin.location().y(),
-                    facingName(pin.facing()));
-            case OutputPin pin -> new ComponentSummary(
-                    "output",
-                    "",
-                    pin.label(),
-                    pin.location().x(),
-                    pin.location().y(),
-                    facingName(pin.facing()));
-            case Constant constant -> new ComponentSummary(
-                    "constant",
-                    constant.value() ? "1" : "0",
-                    "",
-                    constant.location().x(),
-                    constant.location().y(),
-                    facingName(constant.facing()));
-            case Gate gate -> new ComponentSummary(
-                    "gate",
-                    gate.type().name(),
-                    "",
-                    gate.location().x(),
-                    gate.location().y(),
-                    facingName(gate.facing()));
-            case UnsupportedComponent unsupported -> new ComponentSummary(
-                    "unsupported",
-                    unsupported.name(),
-                    "",
-                    unsupported.location().x(),
-                    unsupported.location().y(),
-                    facingName(unsupported.facing()));
+            case InputPin pin -> summary(pin, "input", "", pin.label());
+            case OutputPin pin -> summary(pin, "output", "", pin.label());
+            case Constant constant -> summary(constant, "constant", constant.value() ? "1" : "0", "");
+            case Gate gate -> summary(gate, "gate", gate.type().name(), "");
+            case UnsupportedComponent unsupported -> summary(unsupported, "unsupported", unsupported.name(), "");
         };
     }
 
-    private static WireSummary toWireSummary(Wire wire) {
-        return new WireSummary(
-                wire.from().x(),
-                wire.from().y(),
-                wire.to().x(),
-                wire.to().y());
+    private static ComponentSummary summary(CircuitComponent component, String kind, String detail, String label) {
+        return new ComponentSummary(kind, detail, label, component.location().x(), component.location().y(),
+                component.facing().name().toLowerCase(Locale.ROOT));
     }
 
-    private static String facingName(Orientation facing) {
-        return facing.name().toLowerCase(Locale.ROOT);
+    private static WireSummary toWireSummary(Wire wire) {
+        return new WireSummary(wire.from().x(), wire.from().y(), wire.to().x(), wire.to().y());
     }
 }
