@@ -1,11 +1,12 @@
 package interface_adapter.tutor_chat;
 
-import org.junit.jupiter.api.Test;
-import use_case.tutor_chat.TutorChatOutputData;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
+
+import use_case.tutor_chat.TutorChatOutputData;
 
 class TutorChatPresenterTest {
 
@@ -20,14 +21,21 @@ class TutorChatPresenterTest {
                 new TutorChatOutputData.ChatLine(true, "Why?"),
                 new TutorChatOutputData.ChatLine(false, "Look at row 3."))));
 
-        assertEquals(List.of(new ChatBubble(true, "You", "Why?"), new ChatBubble(false, "Tutor", "Look at row 3.")),
-                viewModel.getState().getMessages());
+        assertEquals(
+                List.of(
+                        new ChatBubble(true, "You", "Why?"),
+                        new ChatBubble(false, "Tutor", "Look at row 3.")
+                ),
+                viewModel.getState().getMessages()
+        );
         assertEquals("", viewModel.getState().getError());
     }
 
     @Test
     void failureKeepsMessages() {
-        presenter.prepareSuccessView(new TutorChatOutputData(List.of(new TutorChatOutputData.ChatLine(true, "Hi"))));
+        presenter.prepareSuccessView(
+                new TutorChatOutputData(List.of(new TutorChatOutputData.ChatLine(true, "Hi")))
+        );
 
         presenter.prepareFailView("The tutor could not answer: offline");
 

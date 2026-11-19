@@ -1,7 +1,9 @@
 package use_case;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
 class TutorSafetyFilterTest {
 
@@ -9,8 +11,9 @@ class TutorSafetyFilterTest {
 
     @Test
     void removesCodeBlocksHeadingsAndCollapsesWhitespace() {
-        String raw = "# Heading One\n\nHere is a hint.\n\n```java\nint x = 1;\n```\n\n   Too    many   spaces.  ";
-        String result = filter.filter(raw);
+        final String raw = "# Heading One\n\nHere is a hint.\n\n"
+                + "```java\nint x = 1;\n```\n\n   Too    many   spaces.  ";
+        final String result = filter.filter(raw);
 
         assertFalse(result.contains("```"));
         assertFalse(result.contains("#"));
@@ -20,8 +23,9 @@ class TutorSafetyFilterTest {
 
     @Test
     void keepsAtMostSixSentences() {
-        String raw = "Sentence one. Sentence two. Sentence three. Sentence four. Sentence five. Sentence six. Sentence seven. Sentence eight.";
-        String result = filter.filter(raw);
+        final String raw = "Sentence one. Sentence two. Sentence three. "
+                + "Sentence four. Sentence five. Sentence six. Sentence seven. Sentence eight.";
+        final String result = filter.filter(raw);
 
         assertTrue(result.contains("Sentence six."));
         assertFalse(result.contains("Sentence seven."));
@@ -30,11 +34,12 @@ class TutorSafetyFilterTest {
 
     @Test
     void replacesFullBooleanExpressionWithNudge() {
-        String raw = "The answer is Sum = A ^ B ^ Cin for this adder.";
-        String result = filter.filter(raw);
+        final String raw = "The answer is Sum = A ^ B ^ Cin for this adder.";
+        final String result = filter.filter(raw);
 
         assertFalse(result.contains("A ^ B ^ Cin"));
-        assertTrue(result.toLowerCase().contains("step by step") || result.toLowerCase().contains("output"));
+        assertTrue(result.toLowerCase().contains("step by step")
+                || result.toLowerCase().contains("output"));
     }
 
     @Test
