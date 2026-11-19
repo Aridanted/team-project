@@ -7,13 +7,13 @@ class TutorInteractorTest {
 
     @Test
     void testExecuteSuccess() {
-        TutorInputData inputData = new TutorInputData("Where is our route");
+        TutorInputData inputData = new TutorInputData("Where is our route", null);
 
         TutorOutputBoundary successPresenter = new TutorOutputBoundary() {
             @Override
             public void prepareSuccessView(String response) {
                 assertNotNull(response);
-                assertTrue(response.contains("AI Tutor"));
+                assertFalse(response.isBlank());
             }
 
             @Override
@@ -22,14 +22,14 @@ class TutorInteractorTest {
             }
         };
 
-        TutorInputBoundary interactor = new TutorInteractor(successPresenter);
+        TutorInputBoundary interactor = new TutorInteractor(successPresenter, new FallbackTutorGateway(null, new RuleBasedTutor()));
 
         interactor.execute(inputData);
     }
 
     @Test
     void testExecuteEmptyMessageFail() {
-        TutorInputData inputData = new TutorInputData("");
+        TutorInputData inputData = new TutorInputData("", null);
 
         TutorOutputBoundary failPresenter = new TutorOutputBoundary() {
             @Override
@@ -43,7 +43,7 @@ class TutorInteractorTest {
             }
         };
 
-        TutorInputBoundary interactor = new TutorInteractor(failPresenter);
+        TutorInputBoundary interactor = new TutorInteractor(failPresenter, new FallbackTutorGateway(null, new RuleBasedTutor()));
 
         interactor.execute(inputData);
     }

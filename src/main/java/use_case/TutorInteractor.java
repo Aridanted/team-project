@@ -2,9 +2,11 @@ package use_case;
 
 public class TutorInteractor implements TutorInputBoundary {
     private final TutorOutputBoundary outputBoundary;
+    private final TutorGateway tutorGateway;
 
-    public TutorInteractor(TutorOutputBoundary outputBoundary) {
+    public TutorInteractor(TutorOutputBoundary outputBoundary, TutorGateway tutorGateway) {
         this.outputBoundary = outputBoundary;
+        this.tutorGateway = tutorGateway;
     }
 
     @Override
@@ -16,9 +18,15 @@ public class TutorInteractor implements TutorInputBoundary {
             return;
         }
 
-        // AI Tutor role (Socratic method): Nudge without giving direct answer
-        String aiResponse = "AI Tutor: You asked '" + studentMsg + "'. Try checking the input values at the failing row in the truth table to see what output the logic gate produces!";
+        String lastCheckResult = inputData.getLastCheckResult();
 
-        outputBoundary.prepareSuccessView(aiResponse);
+        TutorResponse response = tutorGateway.getAITutorResponse(studentMsg, lastCheckResult);
+
+        String finalResponse = response.getMessage();
+        if (response.isOffline()) {
+            finalResponse = "[Offline] " + finalResponse;
+        }
+
+        outputBoundary.prepareSuccessView(finalResponse);
     }
 }

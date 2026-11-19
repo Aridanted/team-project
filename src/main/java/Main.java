@@ -1,6 +1,9 @@
 import interface_adapter.TutorController;
 import interface_adapter.TutorPresenter;
 import interface_adapter.TutorViewModel;
+import use_case.FallbackTutorGateway;
+import use_case.RuleBasedTutor;
+import use_case.TutorGateway;
 import use_case.TutorInteractor;
 import view.TutorChatPanel;
 
@@ -11,7 +14,12 @@ public class Main {
         SwingUtilities.invokeLater(() -> {
             TutorViewModel viewModel = new TutorViewModel();
             TutorPresenter presenter = new TutorPresenter(viewModel);
-            TutorInteractor interactor = new TutorInteractor(presenter);
+
+            TutorGateway primaryAI = null;
+            RuleBasedTutor offlineTutor = new RuleBasedTutor();
+            TutorGateway fallbackGateway = new FallbackTutorGateway(primaryAI, offlineTutor);
+
+            TutorInteractor interactor = new TutorInteractor(presenter, fallbackGateway);
             TutorController controller = new TutorController(interactor);
 
             JFrame frame = new JFrame("LogiCoach - AI Tutor Chat");

@@ -6,12 +6,15 @@ import use_case.TutorInputData;
 public class TutorController {
     private final TutorInputBoundary interactor;
 
+    public void sendMessage(String message) {
+        sendMessage(message, null);
+    }
+
     public TutorController(TutorInputBoundary interactor) {
         this.interactor = interactor;
     }
 
-    public void sendMessage(String message) {
-        TutorInputData inputData = new TutorInputData(message);
-        interactor.execute(inputData);
+    public void sendMessage(String message, String lastCheckResult) {
+        interactor.execute(new TutorInputData(message, lastCheckResult));
     }
 }
