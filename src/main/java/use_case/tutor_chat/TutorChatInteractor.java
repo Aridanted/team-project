@@ -1,14 +1,17 @@
 package use_case.tutor_chat;
 
+import java.util.Objects;
+
 import entity.tutor.ChatMessage;
 import entity.tutor.ChatRole;
 import entity.tutor.Conversation;
-
-import java.util.Objects;
+import use_case.TutorPromptBuilder;
+import use_case.TutorSafetyFilter;
 
 /**
  * Validates the student's message, asks the tutor for a reply with the open circuit and its last
- * check as context, saves both messages to the conversation, and presents it.
+ * check as context, filters the reply so it never gives the answer away, and saves the conversation.
+ * Falling back to the offline tutor is the gateway's job (see {@code FallbackTutorGateway}).
  */
 public final class TutorChatInteractor implements TutorChatInputBoundary {
 
@@ -17,33 +20,63 @@ public final class TutorChatInteractor implements TutorChatInputBoundary {
     private final TutorChatDataAccessInterface session;
     private final TutorGateway tutor;
     private final TutorChatOutputBoundary presenter;
+    private final TutorSafetyFilter safetyFilter;
 
-    public TutorChatInteractor(TutorChatDataAccessInterface session, TutorGateway tutor,
-                               TutorChatOutputBoundary presenter) {
+    /**
+     * Constructs a TutorChatInteractor with the default safety filter.
+     *
+     * @param session the tutor session data access
+     * @param tutor the tutor gateway
+     * @param presenter the output boundary presenter
+     */
+    public TutorChatInteractor(
+            TutorChatDataAccessInterface session,
+            TutorGateway tutor,
+            TutorChatOutputBoundary presenter
+    ) {
+        this(session, tutor, presenter, new TutorSafetyFilter());
+    }
+
+    /**
+     * Constructs a TutorChatInteractor with a custom safety filter.
+     *
+     * @param session the tutor session data access
+     * @param tutor the tutor gateway
+     * @param presenter the output boundary presenter
+     * @param safetyFilter the safety filter for tutor replies
+     */
+    public TutorChatInteractor(
+            TutorChatDataAccessInterface session,
+            TutorGateway tutor,
+            TutorChatOutputBoundary presenter,
+            TutorSafetyFilter safetyFilter
+    ) {
         this.session = Objects.requireNonNull(session, "session");
         this.tutor = Objects.requireNonNull(tutor, "tutor");
         this.presenter = Objects.requireNonNull(presenter, "presenter");
+        this.safetyFilter = Objects.requireNonNull(safetyFilter, "safetyFilter");
     }
 
     @Override
     public void send(TutorChatInputData inputData) {
-        String message = inputData.message() == null ? "" : inputData.message().strip();
-        if (message.isEmpty()) {
-            presenter.prepareFailView("Message cannot be empty!");
-            return;
-        }
-        if (message.length() > MAX_MESSAGE_LENGTH) {
-            presenter.prepareFailView("Message is too long (" + message.length() + " characters, at most "
-                    + MAX_MESSAGE_LENGTH + ").");
+        final String message = validateAndExtractMessage(inputData);
+        if (message == null) {
             return;
         }
 
-        Conversation withQuestion = session.getConversation().append(ChatMessage.fromStudent(message));
-        String reply;
+        final Conversation baseConversation = session.getConversation();
+        final Conversation withQuestion = baseConversation.append(ChatMessage.fromStudent(message));
+        final Conversation conversationForRequest = buildConversationForRequest(
+                baseConversation, withQuestion, message, inputData.hintLevel()
+        );
+
+        final String reply;
         try {
-            reply = tutor.reply(new TutorRequest(withQuestion, session.getCurrentCircuit(), session.getLastCheck()));
-        } catch (TutorUnavailableException e) {
-            presenter.prepareFailView("The tutor could not answer: " + e.getMessage());
+            reply = tutor.reply(
+                    new TutorRequest(conversationForRequest, session.getCurrentCircuit(), session.getLastCheck())
+            );
+        } catch (TutorUnavailableException ex) {
+            presenter.prepareFailView("The tutor could not answer: " + ex.getMessage());
             return;
         }
         if (reply == null || reply.isBlank()) {
@@ -51,7 +84,8 @@ public final class TutorChatInteractor implements TutorChatInputBoundary {
             return;
         }
 
-        Conversation withReply = withQuestion.append(ChatMessage.fromTutor(reply.strip()));
+        final String safeReply = safetyFilter.filter(reply.strip());
+        final Conversation withReply = withQuestion.append(ChatMessage.fromTutor(safeReply));
         session.saveConversation(withReply);
         presenter.prepareSuccessView(toOutputData(withReply));
     }
@@ -60,6 +94,35 @@ public final class TutorChatInteractor implements TutorChatInputBoundary {
     public void clear() {
         session.saveConversation(Conversation.empty());
         presenter.prepareSuccessView(toOutputData(Conversation.empty()));
+    }
+
+    private String validateAndExtractMessage(TutorChatInputData inputData) {
+        final String message = inputData == null || inputData.message() == null
+                ? ""
+                : inputData.message().strip();
+        if (message.isEmpty()) {
+            presenter.prepareFailView("Message cannot be empty!");
+            return null;
+        }
+        if (message.length() > MAX_MESSAGE_LENGTH) {
+            presenter.prepareFailView("Message is too long (" + message.length()
+                    + " characters, at most " + MAX_MESSAGE_LENGTH + ").");
+            return null;
+        }
+        return message;
+    }
+
+    private Conversation buildConversationForRequest(
+            Conversation baseConversation,
+            Conversation withQuestion,
+            String message,
+            int hintLevel
+    ) {
+        if (hintLevel <= 0) {
+            return withQuestion;
+        }
+        final String promptForTutor = TutorPromptBuilder.buildPrompt(message, hintLevel);
+        return baseConversation.append(ChatMessage.fromStudent(promptForTutor));
     }
 
     private static TutorChatOutputData toOutputData(Conversation conversation) {

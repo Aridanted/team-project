@@ -1,21 +1,24 @@
 package use_case.tutor_chat;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import entity.circuit.Circuit;
 import entity.circuit.CircuitTestFactory;
 import entity.truthtable.CheckResult;
 import entity.truthtable.TruthTable;
 import entity.tutor.ChatMessage;
 import entity.tutor.Conversation;
-import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import use_case.FallbackTutorGateway;
+import use_case.RuleBasedTutor;
 
 class TutorChatInteractorTest {
 
@@ -40,8 +43,8 @@ class TutorChatInteractorTest {
         }
 
         @Override
-        public void saveConversation(Conversation conversation) {
-            this.conversation = conversation;
+        public void saveConversation(Conversation updatedConversation) {
+            this.conversation = updatedConversation;
         }
     }
 
@@ -86,26 +89,43 @@ class TutorChatInteractorTest {
         interactor.send(new TutorChatInputData("  Why is Sum wrong?  "));
 
         assertNull(presenter.error);
-        assertEquals(List.of(new TutorChatOutputData.ChatLine(true, "Why is Sum wrong?"),
-                new TutorChatOutputData.ChatLine(false, tutor.reply)), presenter.success.messages());
-        assertEquals(List.of(ChatMessage.fromStudent("Why is Sum wrong?"), ChatMessage.fromTutor(tutor.reply)),
-                session.conversation.messages());
+        assertEquals(
+                List.of(
+                        new TutorChatOutputData.ChatLine(true, "Why is Sum wrong?"),
+                        new TutorChatOutputData.ChatLine(false, tutor.reply)
+                ),
+                presenter.success.messages()
+        );
+        assertEquals(
+                List.of(ChatMessage.fromStudent("Why is Sum wrong?"), ChatMessage.fromTutor(tutor.reply)),
+                session.conversation.messages()
+        );
     }
 
     @Test
     void givesTheTutorTheCircuitTheCheckAndTheWholeChat() {
         session.circuit = CircuitTestFactory.halfAdder();
-        session.lastCheck = new CheckResult(new TruthTable(List.of("A"), List.of("Y"), List.of()), List.of());
-        session.conversation = Conversation.empty().append(ChatMessage.fromStudent("Hi"))
+        session.lastCheck = new CheckResult(
+                new TruthTable(List.of("A"), List.of("Y"), List.of()),
+                List.of()
+        );
+        session.conversation = Conversation.empty()
+                .append(ChatMessage.fromStudent("Hi"))
                 .append(ChatMessage.fromTutor("Hello!"));
 
         interactor.send(new TutorChatInputData("Help"));
 
-        TutorRequest request = tutor.requests.get(0);
+        final TutorRequest request = tutor.requests.get(0);
         assertSame(session.circuit, request.circuit().orElseThrow());
         assertSame(session.lastCheck, request.lastCheck().orElseThrow());
-        assertEquals(List.of(ChatMessage.fromStudent("Hi"), ChatMessage.fromTutor("Hello!"),
-                ChatMessage.fromStudent("Help")), request.conversation().messages());
+        assertEquals(
+                List.of(
+                        ChatMessage.fromStudent("Hi"),
+                        ChatMessage.fromTutor("Hello!"),
+                        ChatMessage.fromStudent("Help")
+                ),
+                request.conversation().messages()
+        );
         assertEquals(4, session.conversation.messages().size());
     }
 
@@ -177,5 +197,27 @@ class TutorChatInteractorTest {
 
         assertTrue(session.conversation.isEmpty());
         assertEquals(List.of(), presenter.success.messages());
+    }
+
+    @Test
+    void fallbackGatewayAnswersWhenOnlineTutorIsDown() {
+        tutor.failure = "Primary offline";
+        final FallbackTutorGateway fallback = new FallbackTutorGateway(tutor, new RuleBasedTutor());
+        final TutorChatInteractor fallbackInteractor = new TutorChatInteractor(session, fallback, presenter);
+
+        fallbackInteractor.send(new TutorChatInputData("How does an XOR gate work?", 2));
+
+        assertNull(presenter.error);
+        assertEquals(2, presenter.success.messages().size());
+        assertTrue(presenter.success.messages().get(1).text().startsWith("Offline Tutor"));
+    }
+
+    @Test
+    void hintLevelChangesWhatTheTutorIsAsked() {
+        interactor.send(new TutorChatInputData("Why is Sum wrong?", 1));
+
+        final List<ChatMessage> sent = tutor.requests.get(0).conversation().messages();
+        assertTrue(sent.get(sent.size() - 1).text().contains("Hint 1"));
+        assertEquals(ChatMessage.fromStudent("Why is Sum wrong?"), session.conversation.messages().get(0));
     }
 }

@@ -1,18 +1,5 @@
 package view;
 
-import interface_adapter.tutor_chat.ChatBubble;
-import interface_adapter.tutor_chat.TutorChatController;
-import interface_adapter.tutor_chat.TutorChatState;
-import interface_adapter.tutor_chat.TutorChatViewModel;
-
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollBar;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.SwingUtilities;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -22,6 +9,20 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
+
+import interface_adapter.tutor_chat.ChatBubble;
+import interface_adapter.tutor_chat.TutorChatController;
+import interface_adapter.tutor_chat.TutorChatState;
+import interface_adapter.tutor_chat.TutorChatViewModel;
+
 /**
  * The right side of the workspace: chat with the AI tutor about the circuit open on the left.
  * Sending waits for the AI in the background; the student's message shows at once and comes back
@@ -30,6 +31,11 @@ import java.util.Optional;
 public final class TutorChatView extends JPanel {
 
     private static final long serialVersionUID = 1L;
+    private static final int MIN_WIDTH = 300;
+    private static final float TITLE_FONT_SIZE = 14f;
+    private static final int HINT_LEVEL_1 = 1;
+    private static final int HINT_LEVEL_2 = 2;
+    private static final int HINT_LEVEL_3 = 3;
 
     static final String INTRO = "Ask the tutor about your circuit. Open and check it on the left "
             + "first so the tutor can see which rows fail.";
@@ -42,25 +48,37 @@ public final class TutorChatView extends JPanel {
     private final JTextField input = new JTextField();
     private final JButton sendButton = new JButton("Send");
     private final JButton clearButton = new JButton("Clear");
+    private final JButton hint1Button = new JButton("Hint 1");
+    private final JButton hint2Button = new JButton("Hint 2");
+    private final JButton hint3Button = new JButton("Hint 3");
     private final JLabel busy = Styles.mutedLabel(" ");
     private final JLabel error = Styles.errorLabel();
 
     private transient List<ChatBubble> messages = List.of();
     private String pending;
 
+    /**
+     * Constructs a TutorChatView connected to the given controller and view model.
+     *
+     * @param controller the tutor chat controller
+     * @param viewModel the tutor chat view model
+     */
     public TutorChatView(TutorChatController controller, TutorChatViewModel viewModel) {
         super(new BorderLayout(Styles.GAP, Styles.GAP));
         this.controller = Objects.requireNonNull(controller, "controller");
         setBorder(Styles.padding());
-        setMinimumSize(new Dimension(300, 0));
+        setMinimumSize(new Dimension(MIN_WIDTH, 0));
 
         add(header(), BorderLayout.NORTH);
         add(transcriptScroll, BorderLayout.CENTER);
         add(inputArea(), BorderLayout.SOUTH);
 
-        sendButton.addActionListener(e -> send());
-        input.addActionListener(e -> send());
+        sendButton.addActionListener(e -> sendWithHint(0));
+        input.addActionListener(e -> sendWithHint(0));
         clearButton.addActionListener(e -> controller.clear());
+        hint1Button.addActionListener(e -> sendWithHint(HINT_LEVEL_1));
+        hint2Button.addActionListener(e -> sendWithHint(HINT_LEVEL_2));
+        hint3Button.addActionListener(e -> sendWithHint(HINT_LEVEL_3));
 
         viewModel.addPropertyChangeListener(OnEventThread.listener(
                 e -> show((TutorChatState) e.getNewValue())));
@@ -74,7 +92,7 @@ public final class TutorChatView extends JPanel {
 
     /** @return each message as "Sender: text", separated by blank lines */
     static String transcriptText(List<ChatBubble> messages) {
-        StringBuilder text = new StringBuilder();
+        final StringBuilder text = new StringBuilder();
         for (ChatBubble message : messages) {
             text.append(message.sender()).append(": ").append(message.text()).append("\n\n");
         }
@@ -82,10 +100,10 @@ public final class TutorChatView extends JPanel {
     }
 
     private JPanel header() {
-        JPanel row = new JPanel(new BorderLayout(Styles.GAP, 0));
-        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, Styles.GAP, 0));
-        JLabel title = new JLabel("AI tutor");
-        title.setFont(title.getFont().deriveFont(Font.BOLD, 14f));
+        final JPanel row = new JPanel(new BorderLayout(Styles.GAP, 0));
+        final JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, Styles.GAP, 0));
+        final JLabel title = new JLabel("AI tutor");
+        title.setFont(title.getFont().deriveFont(Font.BOLD, TITLE_FONT_SIZE));
         left.add(title);
         left.add(busy);
         row.add(left, BorderLayout.CENTER);
@@ -95,17 +113,32 @@ public final class TutorChatView extends JPanel {
 
     private JPanel inputArea() {
         input.setToolTipText("Ask about your circuit, then press Enter");
-        JPanel row = new JPanel(new BorderLayout(Styles.GAP, 0));
-        row.add(input, BorderLayout.CENTER);
-        row.add(sendButton, BorderLayout.EAST);
-        JPanel area = new JPanel(new BorderLayout());
-        area.add(row, BorderLayout.NORTH);
+
+        final JPanel hintRow = new JPanel(new FlowLayout(FlowLayout.LEFT, Styles.GAP, 0));
+        hintRow.add(new JLabel("Hints:"));
+        hintRow.add(hint1Button);
+        hintRow.add(hint2Button);
+        hintRow.add(hint3Button);
+
+        final JPanel sendRow = new JPanel(new BorderLayout(Styles.GAP, 0));
+        sendRow.add(input, BorderLayout.CENTER);
+        sendRow.add(sendButton, BorderLayout.EAST);
+
+        final JPanel controls = new JPanel(new BorderLayout(0, Styles.GAP));
+        controls.add(hintRow, BorderLayout.NORTH);
+        controls.add(sendRow, BorderLayout.SOUTH);
+
+        final JPanel area = new JPanel(new BorderLayout());
+        area.add(controls, BorderLayout.NORTH);
         area.add(error, BorderLayout.SOUTH);
         return area;
     }
 
-    private void send() {
-        String text = input.getText().strip();
+    private void sendWithHint(int hintLevel) {
+        final String typed = input.getText().strip();
+        final String text = typed.isEmpty() && hintLevel > 0
+                ? "Please give me hint level " + hintLevel + " for my circuit."
+                : typed;
         if (text.isEmpty() || pending != null) {
             return;
         }
@@ -114,7 +147,7 @@ public final class TutorChatView extends JPanel {
         Styles.setMessage(error, "");
         setBusy(true);
         render();
-        BackgroundTask.run(() -> controller.send(text), () -> {
+        BackgroundTask.run(() -> controller.send(text, hintLevel), () -> {
             restorePending();
             setBusy(false);
         }, message -> Styles.setMessage(error, message));
@@ -142,17 +175,20 @@ public final class TutorChatView extends JPanel {
     private void setBusy(boolean isBusy) {
         sendButton.setEnabled(!isBusy);
         clearButton.setEnabled(!isBusy);
+        hint1Button.setEnabled(!isBusy);
+        hint2Button.setEnabled(!isBusy);
+        hint3Button.setEnabled(!isBusy);
         Styles.setMessage(busy, isBusy ? "Tutor is thinking..." : "");
     }
 
     private void render() {
-        List<ChatBubble> shown = new ArrayList<>(messages);
+        final List<ChatBubble> shown = new ArrayList<>(messages);
         if (pending != null) {
             shown.add(new ChatBubble(true, "You", pending));
         }
         transcript.setMessages(shown, INTRO);
         SwingUtilities.invokeLater(() -> {
-            JScrollBar bar = transcriptScroll.getVerticalScrollBar();
+            final JScrollBar bar = transcriptScroll.getVerticalScrollBar();
             bar.setValue(bar.getMaximum());
         });
     }
