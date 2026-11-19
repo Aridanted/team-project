@@ -1,9 +1,10 @@
-package use_case;
+package use_case.tutor_chat;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
+import use_case.TutorSafetyFilter;
 
 class TutorSafetyFilterTest {
 

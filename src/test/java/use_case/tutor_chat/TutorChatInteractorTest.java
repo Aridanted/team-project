@@ -1,11 +1,9 @@
 package use_case.tutor_chat;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -176,11 +174,9 @@ class TutorChatInteractorTest {
 
         interactor.send(new TutorChatInputData("Hello?"));
 
-        assertNull(presenter.error);
-        assertNotNull(presenter.success);
-        assertEquals(2, presenter.success.messages().size());
-        assertTrue(presenter.success.messages().get(1).text().startsWith("[Offline] "));
-        assertEquals(2, session.conversation.messages().size());
+        assertEquals("The tutor could not answer: No AI key is set. Add one in the Settings tab.", presenter.error);
+        assertTrue(session.conversation.isEmpty());
+        assertNull(presenter.success);
     }
 
     @Test
@@ -189,10 +185,8 @@ class TutorChatInteractorTest {
 
         interactor.send(new TutorChatInputData("Hello?"));
 
-        assertNull(presenter.error);
-        assertNotNull(presenter.success);
-        assertEquals(2, presenter.success.messages().size());
-        assertTrue(presenter.success.messages().get(1).text().startsWith("[Offline] "));
+        assertEquals("The tutor could not answer: the reply was empty.", presenter.error);
+        assertTrue(session.conversation.isEmpty());
     }
 
     @Test
@@ -206,7 +200,7 @@ class TutorChatInteractorTest {
     }
 
     @Test
-    void worksWithFallbackGatewayAndHintLevel() {
+    void fallbackGatewayAnswersWhenOnlineTutorIsDown() {
         tutor.failure = "Primary offline";
         final FallbackTutorGateway fallback = new FallbackTutorGateway(tutor, new RuleBasedTutor());
         final TutorChatInteractor fallbackInteractor = new TutorChatInteractor(session, fallback, presenter);
@@ -214,6 +208,16 @@ class TutorChatInteractorTest {
         fallbackInteractor.send(new TutorChatInputData("How does an XOR gate work?", 2));
 
         assertNull(presenter.error);
-        assertFalse(presenter.success.messages().isEmpty());
+        assertEquals(2, presenter.success.messages().size());
+        assertTrue(presenter.success.messages().get(1).text().startsWith("Offline Tutor"));
+    }
+
+    @Test
+    void hintLevelChangesWhatTheTutorIsAsked() {
+        interactor.send(new TutorChatInputData("Why is Sum wrong?", 1));
+
+        final List<ChatMessage> sent = tutor.requests.get(0).conversation().messages();
+        assertTrue(sent.get(sent.size() - 1).text().contains("Hint 1"));
+        assertEquals(ChatMessage.fromStudent("Why is Sum wrong?"), session.conversation.messages().get(0));
     }
 }

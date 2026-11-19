@@ -147,19 +147,10 @@ public final class TutorChatView extends JPanel {
         Styles.setMessage(error, "");
         setBusy(true);
         render();
-        BackgroundTask.run(() -> dispatchMessage(text, hintLevel), () -> {
+        BackgroundTask.run(() -> controller.send(text, hintLevel), () -> {
             restorePending();
             setBusy(false);
         }, message -> Styles.setMessage(error, message));
-    }
-
-    private void dispatchMessage(String text, int hintLevel) {
-        // If TutorChatController defines send(String message, int hintLevel), call that overload here.
-        if (hintLevel == 0) {
-            controller.send(text);
-        } else {
-            controller.send(text);
-        }
     }
 
     private void show(TutorChatState state) {

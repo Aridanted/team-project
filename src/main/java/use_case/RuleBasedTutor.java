@@ -1,6 +1,9 @@
 package use_case;
 
 import java.util.Locale;
+import java.util.Optional;
+
+import entity.truthtable.CheckResult;
 
 /**
  * Provides rule-based hints from the latest circuit check result without giving full expressions.
@@ -11,20 +14,23 @@ public class RuleBasedTutor {
      * Generates an offline hint message based on the student's message and last check result.
      *
      * @param studentMsg the student's question or prompt
-     * @param lastCheckResult the result of the most recent circuit check
+     * @param lastCheck the result of the most recent circuit check, if any
      * @return a rule-based hint string
      */
-    public String generateOfflineResponse(String studentMsg, String lastCheckResult) {
+    public String generateOfflineResponse(String studentMsg, Optional<CheckResult> lastCheck) {
         final String topicNote = buildTopicNote(studentMsg);
 
-        if (lastCheckResult == null || lastCheckResult.isBlank()) {
+        if (lastCheck == null || lastCheck.isEmpty()) {
             return "Offline Tutor: Run a check against the truth table first, "
                     + "then tell me which output row fails." + topicNote;
         }
 
-        if (lastCheckResult.contains("FAIL")) {
-            return "Offline Tutor (Rule-based): Some rows failed in your check. "
-                    + "Inspect the inputs and control signals of the gates driving the failing outputs."
+        final CheckResult check = lastCheck.get();
+        if (!check.allPassed()) {
+            final int failing = check.totalRows() - check.passedRows();
+            return "Offline Tutor (Rule-based): " + failing + " of " + check.totalRows()
+                    + " rows failed, on output(s) " + String.join(", ", check.failingOutputs()) + ". "
+                    + "Inspect the inputs of the gates driving those outputs."
                     + topicNote;
         }
 

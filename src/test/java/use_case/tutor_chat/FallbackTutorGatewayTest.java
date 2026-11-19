@@ -1,4 +1,4 @@
-package use_case;
+package use_case.tutor_chat;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.Test;
 
-import use_case.tutor_chat.TutorGateway;
-import use_case.tutor_chat.TutorUnavailableException;
+import use_case.FallbackTutorGateway;
+import use_case.RuleBasedTutor;
 
 class FallbackTutorGatewayTest {
 

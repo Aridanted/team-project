@@ -1,7 +1,9 @@
 package use_case;
 
 import java.util.List;
+import java.util.Optional;
 
+import entity.truthtable.CheckResult;
 import entity.tutor.ChatMessage;
 import entity.tutor.Conversation;
 import use_case.tutor_chat.TutorGateway;
@@ -46,9 +48,7 @@ public class FallbackTutorGateway implements TutorGateway {
         }
 
         final String studentMsg = extractLatestMessage(request);
-        final String lastCheck = request != null
-                ? request.lastCheck().map(Object::toString).orElse(null)
-                : null;
+        final Optional<CheckResult> lastCheck = request != null ? request.lastCheck() : Optional.empty();
         return offlineTutor.generateOfflineResponse(studentMsg, lastCheck);
     }
 
