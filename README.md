@@ -132,6 +132,11 @@ short explanation and optional output expressions. It reads the circuit using
 `CircuitJsonCodec` and passes the explanation through to the Builder state.
 Tests use `FakeLlmClient`.
 
+The Logisim circuit writer positions components by depth, routes wires to their
+ports, and exports a `.circ` file. Round-trip tests reload the exported circuit
+and compare its truth table with the original. Exported files include the
+toolbar tools needed to interact with the circuit in Logisim-evolution.
+
 ---
 
 ## Minimal Viable Product (MVP)
