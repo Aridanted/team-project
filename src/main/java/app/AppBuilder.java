@@ -14,11 +14,15 @@ import data_access.llm.SettingsBackedLlmClient;
 import data_access.llm.tutor.LlmTutorGateway;
 import data_access.llm.tutor.TutorPromptBuilder;
 import data_access.session.InMemorySessionStore;
+import data_access.llm.builder.CircuitDesignPromptBuilder;
+import data_access.llm.builder.LlmDesignGenerator;
 import entity.design.CircuitDescriber;
 import entity.settings.AiSettings;
 import entity.simulation.CircuitSimulator;
 import entity.truthtable.TruthTableChecker;
 import entity.truthtable.TruthTableTextFormat;
+import entity.expression.ExpressionParser;
+import entity.truthtable.TruthTableGenerator;
 import interface_adapter.ai_settings.AiSettingsController;
 import interface_adapter.ai_settings.AiSettingsPresenter;
 import interface_adapter.ai_settings.AiSettingsViewModel;
@@ -35,6 +39,9 @@ import interface_adapter.table_file.TableFileViewModel;
 import interface_adapter.tutor_chat.TutorChatController;
 import interface_adapter.tutor_chat.TutorChatPresenter;
 import interface_adapter.tutor_chat.TutorChatViewModel;
+import interface_adapter.build_circuit.BuildCircuitController;
+import interface_adapter.build_circuit.BuildCircuitPresenter;
+import interface_adapter.build_circuit.BuildCircuitViewModel;
 import use_case.ai_settings.AiSettingsInteractor;
 import use_case.ai_settings.SettingsStorageException;
 import use_case.check_circuit.CheckCircuitInteractor;
@@ -42,14 +49,18 @@ import use_case.import_circuit.ImportCircuitInteractor;
 import use_case.table_file.TableFileInteractor;
 import use_case.tutor_chat.TutorChatInteractor;
 import use_case.tutor_chat.TutorGateway;
+import use_case.build_circuit.BuildCircuitInteractor;
+import use_case.build_circuit.DesignAssembler;
+import use_case.build_circuit.DesignValidator;
+import use_case.build_circuit.OutputExpressionVerifier;
 import view.AiSettingsView;
 import view.CircuitView;
 import view.MainFrame;
 import view.OnEventThread;
-import view.PlaceholderView;
 import view.TruthTableView;
 import view.TutorChatView;
 import view.WorkspaceView;
+import view.BuilderView;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -134,10 +145,24 @@ public final class AppBuilder {
         return new TutorChatView(controller, viewModel);
     }
 
-    /** Person 4: replace the placeholder with the builder view, built on {@link #llmClient}. */
+    /** Creates the Builder tab using the shared AI client. */
     private void addBuilderTab() {
-        String message = "The circuit builder (for practice and learning) will appear here.";
-        frame.addTab("Builder", new PlaceholderView(message));
+        BuildCircuitViewModel viewModel = new BuildCircuitViewModel();
+        BuildCircuitPresenter presenter = new BuildCircuitPresenter(viewModel, tableFormat);
+
+        LlmDesignGenerator generator = new LlmDesignGenerator(
+                llmClient, new CircuitDesignPromptBuilder(), new CircuitJsonCodec());
+
+        BuildCircuitInteractor interactor = new BuildCircuitInteractor(
+                generator,
+                new DesignValidator(),
+                new DesignAssembler(),
+                new TruthTableGenerator(new CircuitSimulator()),
+                new OutputExpressionVerifier(new ExpressionParser()),
+                presenter);
+
+        BuildCircuitController controller = new BuildCircuitController(interactor);
+        frame.addTab("Builder", new BuilderView(controller, viewModel));
     }
 
     private void addSettingsTab() {
