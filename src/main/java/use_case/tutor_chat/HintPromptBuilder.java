@@ -1,11 +1,11 @@
-package use_case;
+package use_case.tutor_chat;
 
 /**
  * Builds prompts tailored to the requested hint level (0 for normal chat, 1 to 3 for hints).
  */
-public final class TutorPromptBuilder {
+public final class HintPromptBuilder {
 
-    private TutorPromptBuilder() {
+    private HintPromptBuilder() {
     }
 
     /**

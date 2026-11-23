@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import entity.simulation.Logic;
 import entity.truthtable.CheckResult;
 import entity.truthtable.TruthTable;
-import use_case.RuleBasedTutor;
 
 class RuleBasedTutorTest {
 

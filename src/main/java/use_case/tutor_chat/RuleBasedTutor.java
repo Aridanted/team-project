@@ -1,4 +1,4 @@
-package use_case;
+package use_case.tutor_chat;
 
 import java.util.Locale;
 import java.util.Optional;

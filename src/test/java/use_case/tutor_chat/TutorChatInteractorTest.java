@@ -17,8 +17,6 @@ import entity.truthtable.CheckResult;
 import entity.truthtable.TruthTable;
 import entity.tutor.ChatMessage;
 import entity.tutor.Conversation;
-import use_case.FallbackTutorGateway;
-import use_case.RuleBasedTutor;
 
 class TutorChatInteractorTest {
 

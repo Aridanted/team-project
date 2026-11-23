@@ -5,8 +5,6 @@ import java.util.Objects;
 import entity.tutor.ChatMessage;
 import entity.tutor.ChatRole;
 import entity.tutor.Conversation;
-import use_case.TutorPromptBuilder;
-import use_case.TutorSafetyFilter;
 
 /**
  * Validates the student's message, asks the tutor for a reply with the open circuit and its last
@@ -121,7 +119,7 @@ public final class TutorChatInteractor implements TutorChatInputBoundary {
         if (hintLevel <= 0) {
             return withQuestion;
         }
-        final String promptForTutor = TutorPromptBuilder.buildPrompt(message, hintLevel);
+        final String promptForTutor = HintPromptBuilder.buildPrompt(message, hintLevel);
         return baseConversation.append(ChatMessage.fromStudent(promptForTutor));
     }
 

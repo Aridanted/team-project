@@ -1,4 +1,4 @@
-package use_case;
+package use_case.tutor_chat;
 
 import java.util.List;
 import java.util.Optional;
@@ -6,9 +6,6 @@ import java.util.Optional;
 import entity.truthtable.CheckResult;
 import entity.tutor.ChatMessage;
 import entity.tutor.Conversation;
-import use_case.tutor_chat.TutorGateway;
-import use_case.tutor_chat.TutorRequest;
-import use_case.tutor_chat.TutorUnavailableException;
 
 /**
  * Gateway that tries a primary AI tutor gateway first and falls back to the offline rule-based tutor.

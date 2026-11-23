@@ -6,8 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.Test;
 
-import use_case.FallbackTutorGateway;
-import use_case.RuleBasedTutor;
 
 class FallbackTutorGatewayTest {
 
