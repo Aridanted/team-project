@@ -14,30 +14,30 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AiSettingsTest {
 
     @Test
-    void defaultsTryGeminiFirstAndHaveNoKeys() {
+    void defaultsTryClaudeFirstAndHaveNoKeys() {
         AiSettings settings = AiSettings.defaults();
 
-        assertEquals(List.of(AiProvider.GEMINI, AiProvider.GROQ), settings.providerOrder());
+        assertEquals(List.of(AiProvider.CLAUDE, AiProvider.GEMINI, AiProvider.CHATGPT), settings.providerOrder());
         assertTrue(settings.apiKeys().isEmpty());
     }
 
     @Test
     void orderIsCompletedAndDeduplicated() {
-        AiSettings settings = new AiSettings(List.of(AiProvider.GROQ, AiProvider.GROQ), Map.of());
+        AiSettings settings = new AiSettings(List.of(AiProvider.CHATGPT, AiProvider.CHATGPT), Map.of());
 
-        assertEquals(List.of(AiProvider.GROQ, AiProvider.GEMINI), settings.providerOrder());
+        assertEquals(List.of(AiProvider.CHATGPT, AiProvider.CLAUDE, AiProvider.GEMINI), settings.providerOrder());
     }
 
     @Test
     void keysAreStrippedAndBlankKeysDropped() {
         Map<AiProvider, String> keys = new HashMap<>();
         keys.put(AiProvider.GEMINI, "  AIza  ");
-        keys.put(AiProvider.GROQ, null);
+        keys.put(AiProvider.CHATGPT, null);
 
         AiSettings settings = new AiSettings(List.of(), keys);
 
         assertEquals("AIza", settings.apiKey(AiProvider.GEMINI).orElseThrow());
-        assertTrue(settings.apiKey(AiProvider.GROQ).isEmpty());
+        assertTrue(settings.apiKey(AiProvider.CHATGPT).isEmpty());
     }
 
     @Test
@@ -45,7 +45,7 @@ class AiSettingsTest {
         assertThrows(IllegalArgumentException.class,
                 () -> new AiSettings(List.of(), Map.of(AiProvider.GEMINI, "AIza\nmore")));
         assertThrows(IllegalArgumentException.class,
-                () -> new AiSettings(List.of(), Map.of(AiProvider.GROQ, "k".repeat(201))));
+                () -> new AiSettings(List.of(), Map.of(AiProvider.CHATGPT, "k".repeat(201))));
     }
 
     @Test
@@ -58,8 +58,8 @@ class AiSettingsTest {
 
     @Test
     void providerIdsAreLenient() {
-        assertEquals(AiProvider.GROQ, AiProvider.fromId(" Groq ").orElseThrow());
-        assertTrue(AiProvider.fromId("openai").isEmpty());
+        assertEquals(AiProvider.CHATGPT, AiProvider.fromId(" ChatGPT ").orElseThrow());
+        assertTrue(AiProvider.fromId("mistral").isEmpty());
         assertTrue(AiProvider.fromId(null).isEmpty());
     }
 }

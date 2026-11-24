@@ -94,9 +94,10 @@ in Logisim, so that I can study how it is built.
 - The table has a mistake: the app refuses to save it and says which line to fix.
 - The file cannot be read or written: the app says so and nothing changes.
 
-### Use Case 4: Set up the AI connection (Alice, draft)
+### Use Case 4: Set up the AI connection (Alice)
 **Main flow**
-1. The student enters an API key for an AI provider and saves it.
+1. The student enters an API key for Claude (recommended), Gemini or ChatGPT, picks which provider
+   to try first, and saves.
 2. The student tests the connection and sees "Connected" or a plain explanation of what failed.
 3. The key is remembered the next time the app starts.
 
@@ -192,10 +193,12 @@ compare a circuit with a table, and list a circuit's full table.
 
 ## API Usage
 
-**API Name:** Google Gemini API (primary), Groq API (fallback)
+**API Name:** Anthropic Claude API (recommended, tried first by default), Google Gemini API and
+OpenAI ChatGPT API (fallbacks, in the order the student picks in Settings)
 
-**Documentation:** [Gemini API](https://ai.google.dev/gemini-api/docs) ·
-[Groq API](https://console.groq.com/docs/api-reference)
+**Documentation:** [Claude API](https://docs.anthropic.com/en/api/messages) ·
+[Gemini API](https://ai.google.dev/gemini-api/docs) ·
+[OpenAI API](https://platform.openai.com/docs/api-reference/chat)
 
 **How it is used in the program:**
 - The tutor sends the student's circuit (as JSON), the failing rows and the chat so far, and gets
@@ -204,7 +207,8 @@ compare a circuit with a table, and list a circuit's full table.
   which the app then verifies itself before showing it.
 - Settings stores the key and tests the connection with a tiny request.
 
-**Status:** Gemini and Groq clients are implemented by Alice and tested with fake HTTP responses.
+**Status:** Claude, Gemini and ChatGPT clients are implemented by Alice and tested with fake HTTP
+responses.
 A live call is confirmed through the Settings tab's "Test connection" when you run the app; we have
 not claimed that in grading materials yet. Tests never call the network.
 
@@ -239,7 +243,8 @@ mvn verify              # Checkstyle + every test (CI runs this on each pull req
 Try it: open `src/test/resources/circuits/half_adder.circ`, type the table from the screenshot
 above, and press Check.
 
-Optional environment variables (for the AI features): `GEMINI_API_KEY`, `GROQ_API_KEY`,
+Optional environment variables (for the AI features): `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`,
+`OPENAI_API_KEY` (and `ANTHROPIC_MODEL`, `GEMINI_MODEL`, `OPENAI_MODEL` to change the model),
 `LOGICOACH_DATA_DIR`. Never commit keys.
 
 ---

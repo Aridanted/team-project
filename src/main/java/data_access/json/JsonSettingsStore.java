@@ -25,7 +25,7 @@ import java.util.Optional;
 /**
  * Keeps AI settings in a JSON file (normally {@code data/settings.json}, which is git-ignored):
  * <pre>
- * {"version": 1, "providerOrder": ["gemini", "groq"], "apiKeys": {"gemini": "..."}}
+ * {"version": 1, "providerOrder": ["claude", "gemini", "chatgpt"], "apiKeys": {"claude": "..."}}
  * </pre>
  * Writes go to a temporary file in the same folder that is then moved over the old one, so a
  * crash never leaves a half-written file. Where the file system supports it, only the owner may

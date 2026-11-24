@@ -98,6 +98,10 @@ Template:
   chain from a list of `LlmProviderSpec`s, so a new provider is a new client class plus one spec.
   Errors carry a `Kind` (NO_KEY, NETWORK, RATE_LIMIT, AUTH, BAD_RESPONSE, BLOCKED); messages mask
   the key.
+- Update 2026-11-24 / Person 2: the providers are now Claude (recommended, first by default),
+  Gemini and ChatGPT. Groq was dropped; `GroqClient` became `OpenAiClient` (same chat completions
+  format) and `ClaudeClient` was added. As planned, only the client classes, the `AiProvider`
+  values and the specs in `LlmProviders` changed; the factory and decorators did not.
 - SOLID / pattern: Strategy (providers), Decorator (fallback, rate limit, reloading), Null Object,
   Factory; Open/Closed (new providers need no factory change); Dependency Inversion (the settings
   use case tests connections through its own `AiConnectionTester` port, not through `LlmClient`).

@@ -12,9 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class GroqClientTest {
+class OpenAiClientTest {
 
-    private static final String KEY = "gsk_secret";
+    private static final String KEY = "sk-proj-secret";
     private static final String OK = "{\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\","
             + "\"content\":\"Hi!\"},\"finish_reason\":\"stop\"}]}";
 
@@ -27,25 +27,26 @@ class GroqClientTest {
     void sendsOpenAiStyleRequest() throws LlmException {
         FakeHttpTransport transport = FakeHttpTransport.answering(200, OK);
 
-        assertEquals("Hi!", new GroqClient(transport, KEY, "llama-3.1-8b-instant").complete(chat(true)));
+        assertEquals("Hi!", new OpenAiClient(transport, KEY, "gpt-4o-mini").complete(chat(true)));
 
-        assertEquals("https://api.groq.com/openai/v1/chat/completions", transport.url);
+        assertEquals("https://api.openai.com/v1/chat/completions", transport.url);
         assertEquals(Map.of("Authorization", "Bearer " + KEY), transport.headers);
         JSONObject body = new JSONObject(transport.body);
-        assertEquals("llama-3.1-8b-instant", body.getString("model"));
+        assertEquals("gpt-4o-mini", body.getString("model"));
         JSONArray messages = body.getJSONArray("messages");
         assertEquals(List.of("system", "user", "assistant", "user"), List.of(
                 messages.getJSONObject(0).getString("role"), messages.getJSONObject(1).getString("role"),
                 messages.getJSONObject(2).getString("role"), messages.getJSONObject(3).getString("role")));
         assertEquals("Be kind.", messages.getJSONObject(0).getString("content"));
-        assertEquals(300, body.getInt("max_tokens"));
+        assertEquals(300, body.getInt("max_completion_tokens"));
         assertEquals(0.2, body.getDouble("temperature"));
         assertEquals("json_object", body.getJSONObject("response_format").getString("type"));
     }
 
     @Test
     void plainRequestsHaveNoResponseFormatOrEmptySystemMessage() {
-        JSONObject body = GroqClient.requestBody("m", new LlmRequest("", List.of(LlmMessage.user("Hi")), 1, 10, false));
+        JSONObject body = OpenAiClient.requestBody("m",
+                new LlmRequest("", List.of(LlmMessage.user("Hi")), 1, 10, false));
 
         assertFalse(body.has("response_format"));
         assertEquals(1, body.getJSONArray("messages").length());
@@ -67,16 +68,16 @@ class GroqClientTest {
 
     @Test
     void messagesNeverContainTheKey() {
-        LlmException e = assertThrows(LlmException.class, () -> new GroqClient(
+        LlmException e = assertThrows(LlmException.class, () -> new OpenAiClient(
                 FakeHttpTransport.answering(401, "{\"error\":{\"message\":\"Invalid API Key " + KEY + "\"}}"), KEY, "m")
                 .complete(chat(false)));
 
-        assertEquals("Groq: HTTP 401: Invalid API Key ***", e.getMessage());
+        assertEquals("ChatGPT: HTTP 401: Invalid API Key ***", e.getMessage());
     }
 
     @Test
     void transportFailuresAreNetworkErrors() {
-        LlmException e = assertThrows(LlmException.class, () -> new GroqClient(
+        LlmException e = assertThrows(LlmException.class, () -> new OpenAiClient(
                 FakeHttpTransport.failing(new IOException("connection refused")), KEY, "m").complete(chat(false)));
 
         assertEquals(LlmException.Kind.NETWORK, e.kind());
@@ -84,7 +85,7 @@ class GroqClientTest {
 
     private static void assertKind(LlmException.Kind kind, int status, String body) {
         LlmException e = assertThrows(LlmException.class,
-                () -> new GroqClient(FakeHttpTransport.answering(status, body), KEY, "m").complete(chat(false)));
+                () -> new OpenAiClient(FakeHttpTransport.answering(status, body), KEY, "m").complete(chat(false)));
         assertEquals(kind, e.kind(), e.getMessage());
     }
 }

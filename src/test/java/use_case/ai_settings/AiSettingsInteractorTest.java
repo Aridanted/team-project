@@ -31,14 +31,15 @@ class AiSettingsInteractorTest {
 
     @Test
     void loadPresentsSavedSettingsInOrder() {
-        store.saved = new AiSettings(List.of(AiProvider.GROQ), Map.of(AiProvider.GROQ, "gsk_1"));
+        store.saved = new AiSettings(List.of(AiProvider.CHATGPT), Map.of(AiProvider.CHATGPT, "gsk_1"));
 
         interactor.load();
 
         AiSettingsOutputData data = presenter.settings.get(0);
         assertFalse(data.saved());
         var expected = List.of(
-                new ProviderSettings("groq", "Groq", "gsk_1"),
+                new ProviderSettings("chatgpt", "ChatGPT", "gsk_1"),
+                new ProviderSettings("claude", "Claude", ""),
                 new ProviderSettings("gemini", "Gemini", ""));
         assertEquals(expected, data.providers());
         assertTrue(presenter.errors.isEmpty());
@@ -50,16 +51,16 @@ class AiSettingsInteractorTest {
 
         interactor.load();
 
-        assertEquals("gemini", presenter.settings.get(0).providers().get(0).id());
+        assertEquals("claude", presenter.settings.get(0).providers().get(0).id());
         assertEquals(List.of("The settings file is damaged."), presenter.errors);
     }
 
     @Test
     void saveStoresTrimmedKeysAndPresentsThem() {
-        interactor.save(new SaveAiSettingsInputData(List.of("groq", "gemini"),
-                Map.of("gemini", "  AIza1  ", "groq", "")));
+        interactor.save(new SaveAiSettingsInputData(List.of("chatgpt", "gemini"),
+                Map.of("gemini", "  AIza1  ", "chatgpt", "")));
 
-        assertEquals(new AiSettings(List.of(AiProvider.GROQ, AiProvider.GEMINI), Map.of(AiProvider.GEMINI, "AIza1")),
+        assertEquals(new AiSettings(List.of(AiProvider.CHATGPT, AiProvider.GEMINI), Map.of(AiProvider.GEMINI, "AIza1")),
                 store.saved);
         AiSettingsOutputData data = presenter.settings.get(0);
         assertTrue(data.saved());
@@ -96,14 +97,14 @@ class AiSettingsInteractorTest {
 
     @Test
     void connectionProblemsArePresented() {
-        tester.failure = new AiConnectionException(ConnectionProblem.RATE_LIMIT, "Groq: HTTP 429");
+        tester.failure = new AiConnectionException(ConnectionProblem.RATE_LIMIT, "ChatGPT: HTTP 429");
 
-        interactor.testConnection(new TestConnectionInputData("groq", "gsk_x"));
+        interactor.testConnection(new TestConnectionInputData("chatgpt", "gsk_x"));
 
         ConnectionTestOutputData data = presenter.connections.get(0);
         assertFalse(data.isConnected());
         assertEquals(ConnectionProblem.RATE_LIMIT, data.problem());
-        assertEquals("Groq", data.providerName());
+        assertEquals("ChatGPT", data.providerName());
     }
 
     @Test
@@ -111,13 +112,13 @@ class AiSettingsInteractorTest {
         interactor.testConnection(new TestConnectionInputData("gemini", "  "));
         interactor.testConnection(new TestConnectionInputData("gemini", null));
         interactor.testConnection(new TestConnectionInputData("nope", "k"));
-        interactor.testConnection(new TestConnectionInputData("groq", "gsk 1"));
+        interactor.testConnection(new TestConnectionInputData("chatgpt", "gsk 1"));
 
         assertTrue(tester.calls.isEmpty());
         assertEquals("Enter a Gemini API key first.", presenter.errors.get(0));
         assertEquals("Enter a Gemini API key first.", presenter.errors.get(1));
         assertEquals("Unknown AI provider \"nope\".", presenter.errors.get(2));
-        assertTrue(presenter.errors.get(3).startsWith("The Groq API key contains spaces"));
+        assertTrue(presenter.errors.get(3).startsWith("The ChatGPT API key contains spaces"));
     }
 
     private static final class FakeStore implements AiSettingsDataAccessInterface {
