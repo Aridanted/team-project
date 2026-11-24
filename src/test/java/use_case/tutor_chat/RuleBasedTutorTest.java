@@ -1,5 +1,6 @@
 package use_case.tutor_chat;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -55,6 +56,63 @@ class RuleBasedTutorTest {
         final String reply = tutor.generateOfflineResponse("How does XOR work?", Optional.empty());
 
         assertTrue(reply.contains("inputs differ"));
+    }
+
+    @Test
+    void eachHintLevelGivesADifferentMessage() {
+        final Optional<CheckResult> check = Optional.of(failingCheck());
+
+        final String normal = tutor.generateOfflineResponse("help", check, 0);
+        final String hint1 = tutor.generateOfflineResponse("help", check, 1);
+        final String hint2 = tutor.generateOfflineResponse("help", check, 2);
+        final String hint3 = tutor.generateOfflineResponse("help", check, 3);
+
+        assertEquals(4, java.util.Set.of(normal, hint1, hint2, hint3).size());
+        assertTrue(hint1.contains("Hint 1"));
+        assertTrue(hint2.contains("Hint 2"));
+        assertTrue(hint3.contains("Hint 3"));
+    }
+
+    @Test
+    void hintTwoPointsAtTheFirstFailingRowAndItsInputs() {
+        final String hint = tutor.generateOfflineResponse("help", Optional.of(failingCheck()), 2);
+
+        assertTrue(hint.contains("row 2"));
+        assertTrue(hint.contains("A is 1"));
+        assertTrue(hint.contains("Y"));
+    }
+
+    @Test
+    void hintLevelsAlsoDifferWithoutACheck() {
+        final String hint1 = tutor.generateOfflineResponse("help", Optional.empty(), 1);
+        final String hint2 = tutor.generateOfflineResponse("help", Optional.empty(), 2);
+        final String hint3 = tutor.generateOfflineResponse("help", Optional.empty(), 3);
+
+        assertEquals(3, java.util.Set.of(hint1, hint2, hint3).size());
+    }
+
+    @Test
+    void hintThreeUsesTheTopicOfTheQuestion() {
+        final String hint = tutor.generateOfflineResponse("How does an XOR work?", Optional.empty(), 3);
+
+        assertTrue(hint.contains("inputs differ"));
+    }
+
+    @Test
+    void twoArgumentOverloadIsNormalChat() {
+        assertEquals(tutor.generateOfflineResponse("help", Optional.empty(), 0),
+                tutor.generateOfflineResponse("help", Optional.empty()));
+    }
+
+    private static CheckResult failingCheck() {
+        return new CheckResult(
+                new TruthTable(List.of("A"), List.of("Y"), List.of()),
+                List.of(
+                        row(0, List.of()),
+                        new CheckResult.RowResult(1, List.of(Logic.ONE), List.of(Logic.ONE), List.of(Logic.ZERO),
+                                List.of("Y"))
+                )
+        );
     }
 
     private static CheckResult.RowResult row(int index, List<String> failingOutputs) {

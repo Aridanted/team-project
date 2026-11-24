@@ -68,22 +68,25 @@ public final class TutorChatInteractor implements TutorChatInputBoundary {
                 baseConversation, withQuestion, message, inputData.hintLevel()
         );
 
-        final String reply;
+        final TutorReply answer;
         try {
-            reply = tutor.reply(
-                    new TutorRequest(conversationForRequest, session.getCurrentCircuit(), session.getLastCheck())
-            );
+            answer = tutor.answer(new TutorRequest(conversationForRequest, session.getCurrentCircuit(),
+                    session.getLastCheck(), inputData.hintLevel()));
         } catch (TutorUnavailableException ex) {
             presenter.prepareFailView("The tutor could not answer: " + ex.getMessage());
             return;
         }
+        final String reply = answer == null ? null : answer.text();
         if (reply == null || reply.isBlank()) {
             presenter.prepareFailView("The tutor could not answer: the reply was empty.");
             return;
         }
 
         final String safeReply = safetyFilter.filter(reply.strip());
-        final Conversation withReply = withQuestion.append(ChatMessage.fromTutor(safeReply));
+        final ChatMessage tutorMessage = answer.offline()
+                ? ChatMessage.fromOfflineTutor(safeReply)
+                : ChatMessage.fromTutor(safeReply);
+        final Conversation withReply = withQuestion.append(tutorMessage);
         session.saveConversation(withReply);
         presenter.prepareSuccessView(toOutputData(withReply));
     }
@@ -126,7 +129,7 @@ public final class TutorChatInteractor implements TutorChatInputBoundary {
     private static TutorChatOutputData toOutputData(Conversation conversation) {
         return new TutorChatOutputData(conversation.messages().stream()
                 .map(message -> new TutorChatOutputData.ChatLine(
-                        message.role() == ChatRole.STUDENT, message.text()))
+                        message.role() == ChatRole.STUDENT, message.text(), message.offline()))
                 .toList());
     }
 }

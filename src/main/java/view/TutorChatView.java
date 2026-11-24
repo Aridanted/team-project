@@ -94,7 +94,8 @@ public final class TutorChatView extends JPanel {
     static String transcriptText(List<ChatBubble> messages) {
         final StringBuilder text = new StringBuilder();
         for (ChatBubble message : messages) {
-            text.append(message.sender()).append(": ").append(message.text()).append("\n\n");
+            final String sender = message.offline() ? message.sender() + " (offline)" : message.sender();
+            text.append(sender).append(": ").append(message.text()).append("\n\n");
         }
         return text.toString();
     }

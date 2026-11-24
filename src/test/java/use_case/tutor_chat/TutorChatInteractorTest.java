@@ -211,6 +211,33 @@ class TutorChatInteractorTest {
     }
 
     @Test
+    void offlineReplyIsMarkedOfflineInTheConversationAndTheOutput() {
+        tutor.failure = "Primary offline";
+        final TutorChatInteractor fallbackInteractor = new TutorChatInteractor(
+                session, new FallbackTutorGateway(tutor, new RuleBasedTutor()), presenter);
+
+        fallbackInteractor.send(new TutorChatInputData("Help", 1));
+
+        assertTrue(presenter.success.messages().get(1).offline());
+        assertEquals(false, presenter.success.messages().get(0).offline());
+        assertTrue(session.conversation.messages().get(1).offline());
+    }
+
+    @Test
+    void onlineReplyIsNotMarkedOffline() {
+        interactor.send(new TutorChatInputData("Help"));
+
+        assertEquals(false, presenter.success.messages().get(1).offline());
+    }
+
+    @Test
+    void hintLevelReachesTheGatewayRequest() {
+        interactor.send(new TutorChatInputData("Help", 3));
+
+        assertEquals(3, tutor.requests.get(0).hintLevel());
+    }
+
+    @Test
     void hintLevelChangesWhatTheTutorIsAsked() {
         interactor.send(new TutorChatInputData("Why is Sum wrong?", 1));
 

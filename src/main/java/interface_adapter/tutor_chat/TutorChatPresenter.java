@@ -21,7 +21,8 @@ public final class TutorChatPresenter implements TutorChatOutputBoundary {
     public void prepareSuccessView(TutorChatOutputData outputData) {
         final TutorChatState state = new TutorChatState(viewModel.getState());
         state.setMessages(outputData.messages().stream()
-                .map(line -> new ChatBubble(line.fromStudent(), line.fromStudent() ? STUDENT : TUTOR, line.text()))
+                .map(line -> new ChatBubble(line.fromStudent(), line.fromStudent() ? STUDENT : TUTOR,
+                        line.text(), line.offline()))
                 .toList());
         state.setError("");
         viewModel.setState(state);

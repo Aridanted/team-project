@@ -48,4 +48,49 @@ class TutorSafetyFilterTest {
         assertTrue(filter.filter("   \n\t  ").toLowerCase().contains("unavailable"));
         assertTrue(filter.filter(null).toLowerCase().contains("unavailable"));
     }
+
+    @Test
+    void removesNegatedAnswersInEveryNotilation() {
+        final String[] leaks = {
+            "The answer is Y = !(A & B) for this gate.",
+            "Use Y = NOT (A AND B) here.",
+            "Try Y = NOT A to fix it.",
+            "You want Y = ~(A | B).",
+            "It should be Y = !A + B.",
+            "Then Y = A NAND B works.",
+            "Write `!(A & B)` on the output.",
+            "Put a NOT(A AND B) gate there.",
+            "The output is NOT A for that row.",
+            "Just use A AND B on the output.",
+        };
+        for (String leak : leaks) {
+            final String result = filter.filter(leak);
+            assertFalse(result.contains("!(") || result.contains("~(") || result.contains("NOT")
+                    || result.contains("NAND") || result.contains("A & B") || result.contains("A AND B")
+                    || result.contains("!A"), "leaked: " + leak + " -> " + result);
+        }
+    }
+
+    @Test
+    void keepsPlainAdviceThatMentionsNotAsAnEnglishWord() {
+        final String raw = "That is not quite right. Think about what an inverter does to the input.";
+
+        assertTrue(filter.filter(raw).contains("not quite right"));
+    }
+
+    @Test
+    void keepsOfflineTutorHintsIntact() {
+        final String hint = "Offline Tutor (Rule-based): Hint 2: 1 of 2 rows fail, on output(s) Y. "
+                + "Trace row 2 (A is 1, B is 0) through the gates that drive Y, "
+                + "and compare each gate's output with what you expect.";
+
+        assertTrue(filter.filter(hint).contains("Trace row 2 (A is 1, B is 0)"));
+    }
+
+    @Test
+    void repeatedNudgesAreCollapsed() {
+        final String result = filter.filter("Y = !A. Z = !B.");
+
+        assertTrue(result.indexOf("step by step") == result.lastIndexOf("step by step"));
+    }
 }

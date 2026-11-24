@@ -8,4 +8,16 @@ public interface TutorGateway {
      * @throws TutorUnavailableException if no reply could be obtained
      */
     String reply(TutorRequest request) throws TutorUnavailableException;
+
+    /**
+     * Like {@link #reply} but also says whether the reply came from the offline tutor. Gateways that
+     * never fall back keep this default, which marks every reply as online.
+     *
+     * @param request the chat and circuit context
+     * @return the reply and its source
+     * @throws TutorUnavailableException if no reply could be obtained
+     */
+    default TutorReply answer(TutorRequest request) throws TutorUnavailableException {
+        return TutorReply.online(reply(request));
+    }
 }

@@ -32,6 +32,21 @@ class TutorChatPresenterTest {
     }
 
     @Test
+    void marksOfflineTutorRepliesOnTheBubble() {
+        presenter.prepareSuccessView(new TutorChatOutputData(List.of(
+                new TutorChatOutputData.ChatLine(true, "Why?"),
+                new TutorChatOutputData.ChatLine(false, "Check row 2.", true))));
+
+        assertEquals(
+                List.of(
+                        new ChatBubble(true, "You", "Why?", false),
+                        new ChatBubble(false, "Tutor", "Check row 2.", true)
+                ),
+                viewModel.getState().getMessages()
+        );
+    }
+
+    @Test
     void failureKeepsMessages() {
         presenter.prepareSuccessView(
                 new TutorChatOutputData(List.of(new TutorChatOutputData.ChatLine(true, "Hi")))

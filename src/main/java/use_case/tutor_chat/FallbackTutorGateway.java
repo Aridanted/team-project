@@ -33,11 +33,22 @@ public class FallbackTutorGateway implements TutorGateway {
      */
     @Override
     public String reply(TutorRequest request) {
+        return answer(request).text();
+    }
+
+    /**
+     * Like {@link #reply} but marks the answer as offline when the rule-based tutor wrote it.
+     *
+     * @param request the tutor request containing conversation, circuit, and check state
+     * @return the reply and whether it came from the offline tutor
+     */
+    @Override
+    public TutorReply answer(TutorRequest request) {
         try {
             if (primaryAi != null) {
                 final String aiReply = primaryAi.reply(request);
                 if (aiReply != null && !aiReply.isBlank()) {
-                    return aiReply;
+                    return TutorReply.online(aiReply);
                 }
             }
         } catch (TutorUnavailableException ignored) {
@@ -46,7 +57,8 @@ public class FallbackTutorGateway implements TutorGateway {
 
         final String studentMsg = extractLatestMessage(request);
         final Optional<CheckResult> lastCheck = request != null ? request.lastCheck() : Optional.empty();
-        return offlineTutor.generateOfflineResponse(studentMsg, lastCheck);
+        final int hintLevel = request != null ? request.hintLevel() : 0;
+        return TutorReply.offline(offlineTutor.generateOfflineResponse(studentMsg, lastCheck, hintLevel));
     }
 
     private String extractLatestMessage(TutorRequest request) {
