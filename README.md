@@ -208,9 +208,17 @@ OpenAI ChatGPT API (fallbacks, in the order the student picks in Settings)
 - Settings stores the key and tests the connection with a tiny request.
 
 **Status:** Claude, Gemini and ChatGPT clients are implemented by Alice and tested with fake HTTP
-responses.
-A live call is confirmed through the Settings tab's "Test connection" when you run the app; we have
-not claimed that in grading materials yet. Tests never call the network.
+responses. Tests never call the network. Real calls with a key (no keys are stored in the repo):
+
+| Provider | Default model | Settings "Test connection" | Builder request |
+|----------|---------------|----------------------------|-----------------|
+| Claude | `claude-haiku-5-5` | Not tested yet | Not tested yet |
+| Gemini | `gemini-3.5-flash-lite` | Not tested yet | Not tested yet |
+| ChatGPT | `gpt-4o-mini` | Not tested yet | Not tested yet |
+
+Claude Haiku 5.5 and Gemini 3.5 Flash-Lite do not take `temperature`, and both think before
+replying, so their clients never send `temperature` and always allow enough output tokens.
+`gemini-2.5-flash-lite` is no longer offered to new Gemini keys (issue #15).
 
 **Data persistence:** expected truth tables are saved to and loaded from text files (Use Case 3).
 AI settings are saved to `data/settings.json` by `JsonSettingsStore` (Use Case 4).

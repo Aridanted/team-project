@@ -41,8 +41,27 @@ class ClaudeClientTest {
                 messages.getJSONObject(0).getString("role"), messages.getJSONObject(1).getString("role"),
                 messages.getJSONObject(2).getString("role")));
         assertEquals("Why?", messages.getJSONObject(2).getString("content"));
-        assertEquals(300, body.getInt("max_tokens"));
-        assertEquals(0.2, body.getDouble("temperature"));
+        assertEquals(ClaudeClient.MIN_OUTPUT_TOKENS, body.getInt("max_tokens"));
+        assertFalse(body.has("temperature"));
+    }
+
+    @Test
+    void largeTokenLimitsAreKept() {
+        JSONObject body = ClaudeClient.requestBody("m",
+                new LlmRequest("", List.of(LlmMessage.user("Hi")), 0.2, 4096, false));
+
+        assertEquals(4096, body.getInt("max_tokens"));
+    }
+
+    @Test
+    void runningOutOfTokensWhileThinkingIsExplained() {
+        String body = "{\"content\":[{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"s\"}],"
+                + "\"stop_reason\":\"max_tokens\"}";
+        LlmException e = assertThrows(LlmException.class, () -> new ClaudeClient(
+                FakeHttpTransport.answering(200, body), KEY, "m").complete(chat(false)));
+
+        assertEquals(LlmException.Kind.BAD_RESPONSE, e.kind());
+        assertEquals("Claude: the reply ran out of tokens while the model was thinking", e.getMessage());
     }
 
     @Test

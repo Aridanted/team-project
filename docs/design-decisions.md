@@ -102,6 +102,12 @@ Template:
   Gemini and ChatGPT. Groq was dropped; `GroqClient` became `OpenAiClient` (same chat completions
   format) and `ClaudeClient` was added. As planned, only the client classes, the `AiProvider`
   values and the specs in `LlmProviders` changed; the factory and decorators did not.
+- Update 2026-11-24 / Person 2 (review of the provider change): Claude Haiku 5.5 and Gemini 3.5
+  Flash-Lite deprecate `temperature` and think before replying, with thinking counted in the
+  output token limit. `ClaudeClient` and `GeminiClient` no longer send `temperature` and enforce a
+  minimum output limit; the connection test asks for up to 1024 tokens instead of 16. The Gemini
+  default moved to `gemini-3.5-flash-lite` because `gemini-2.5-flash-lite` returns HTTP 404 for
+  new keys (issue #15). `OpenAiClient` still sends `temperature`, which `gpt-4o-mini` supports.
 - SOLID / pattern: Strategy (providers), Decorator (fallback, rate limit, reloading), Null Object,
   Factory; Open/Closed (new providers need no factory change); Dependency Inversion (the settings
   use case tests connections through its own `AiConnectionTester` port, not through `LlmClient`).

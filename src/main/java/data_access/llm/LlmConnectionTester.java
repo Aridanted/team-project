@@ -11,8 +11,15 @@ import java.util.Objects;
 /** Tests a key by asking that one provider for a one-word reply. */
 public final class LlmConnectionTester implements AiConnectionTester {
 
+    /**
+     * Room for the one-word reply plus any thinking the model does first. Thinking models (such
+     * as Claude Haiku 5.5) spend output tokens before replying, so a tiny limit can end the
+     * reply before "OK" is written.
+     */
+    static final int TEST_OUTPUT_TOKENS = 1024;
+
     static final LlmRequest TEST_REQUEST = new LlmRequest("You are checking that a connection works.",
-            List.of(LlmMessage.user("Reply with the single word OK.")), 0.0, 16, false);
+            List.of(LlmMessage.user("Reply with the single word OK.")), 0.0, TEST_OUTPUT_TOKENS, false);
 
     private final LlmClientFactory factory;
 

@@ -7,8 +7,12 @@ import java.util.List;
 /** The providers LogiCoach supports, with their environment variables and default models. */
 public final class LlmProviders {
 
-    /** Cheapest Gemini model that handles the tutor and builder well. Override with GEMINI_MODEL. */
-    public static final String DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite";
+    /**
+     * Cheapest Gemini model that handles the tutor and builder well. Override with GEMINI_MODEL.
+     * Google no longer offers gemini-2.5-flash-lite to new keys (HTTP 404, issue #15) and its
+     * error message recommends this model instead.
+     */
+    public static final String DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
 
     /** Cheapest Claude model, fast enough for chat. Override with ANTHROPIC_MODEL. */
     public static final String DEFAULT_CLAUDE_MODEL = "claude-haiku-5-5";

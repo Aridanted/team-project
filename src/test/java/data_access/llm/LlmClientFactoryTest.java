@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Factory, settings reloading and the connection tester, with fake provider clients. */
 class LlmClientFactoryTest {
@@ -96,6 +97,11 @@ class LlmClientFactoryTest {
         new LlmConnectionTester(factory).test(AiProvider.CHATGPT, "typed");
 
         assertEquals(List.of("chatgpt:typed:llama"), built);
+    }
+
+    @Test
+    void connectionTestLeavesRoomForThinkingModels() {
+        assertTrue(LlmConnectionTester.TEST_REQUEST.maxOutputTokens() >= 1024);
     }
 
     @Test

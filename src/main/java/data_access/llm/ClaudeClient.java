@@ -11,6 +11,10 @@ import java.util.Objects;
 /**
  * Anthropic Claude via the Messages API.
  *
+ * <p>Requests follow the Claude Haiku 5.5 migration guide: no {@code temperature} (the model
+ * is guided by the prompt instead), and enough {@code max_tokens} for adaptive thinking, which
+ * is on by default and uses the same token budget as the reply.
+ *
  * <p>HTTP 401/403 mean {@link LlmException.Kind#AUTH}; 429 (and Anthropic's 529 "overloaded")
  * mean {@code RATE_LIMIT}; other 5xx and transport failures mean {@code NETWORK}; a
  * {@code refusal} stop or an empty reply means {@code BLOCKED} or {@code BAD_RESPONSE}.
@@ -23,6 +27,12 @@ public final class ClaudeClient implements LlmClient {
     /** Claude has no JSON mode, so JSON replies are requested in the system prompt instead. */
     static final String JSON_INSTRUCTION = "Reply with a single JSON object and nothing else: no markdown "
             + "fences and no text before or after it.";
+
+    /**
+     * Thinking tokens count toward {@code max_tokens}, so a small limit can end the reply while
+     * the model is still thinking. Requests never ask for fewer than this.
+     */
+    static final int MIN_OUTPUT_TOKENS = 2048;
 
     private static final String NAME = "Claude";
 
@@ -64,8 +74,7 @@ public final class ClaudeClient implements LlmClient {
         JSONObject body = new JSONObject()
                 .put("model", model)
                 .put("messages", messages)
-                .put("temperature", request.temperature())
-                .put("max_tokens", request.maxOutputTokens());
+                .put("max_tokens", Math.max(MIN_OUTPUT_TOKENS, request.maxOutputTokens()));
         String system = request.systemPrompt().isBlank() ? "" : request.systemPrompt();
         if (request.expectJson()) {
             system = system.isEmpty() ? JSON_INSTRUCTION : system + "\n\n" + JSON_INSTRUCTION;
@@ -103,9 +112,13 @@ public final class ClaudeClient implements LlmClient {
                 }
             }
             if (text.toString().isBlank()) {
-                boolean refused = "refusal".equals(reply.optString("stop_reason", ""));
-                throw new LlmException(refused ? LlmException.Kind.BLOCKED : LlmException.Kind.BAD_RESPONSE,
-                        NAME + ": empty reply");
+                String stopReason = reply.optString("stop_reason", "");
+                if ("refusal".equals(stopReason)) {
+                    throw new LlmException(LlmException.Kind.BLOCKED, NAME + ": the model declined to answer");
+                }
+                String detail = "max_tokens".equals(stopReason)
+                        ? ": the reply ran out of tokens while the model was thinking" : ": empty reply";
+                throw new LlmException(LlmException.Kind.BAD_RESPONSE, NAME + detail);
             }
             return text.toString();
         } catch (JSONException e) {
