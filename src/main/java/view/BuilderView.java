@@ -27,6 +27,7 @@ public final class BuilderView extends JPanel {
     private final JLabel error = Styles.errorLabel();
     private final JTextArea explanation = new JTextArea(6, 40);
     private final JTextArea truthTable = new JTextArea(12, 40);
+    private final CircuitCanvas canvas = new CircuitCanvas();
 
     /**
      * Creates the Builder screen.
@@ -80,7 +81,10 @@ public final class BuilderView extends JPanel {
         truthTable.setEditable(false);
         truthTable.setFont(Styles.MONOSPACED);
 
+        canvas.setEmptyMessage("Build a circuit to see its preview here.");
+
         JTabbedPane tabs = new JTabbedPane();
+        tabs.addTab("Circuit", canvas);
         tabs.addTab("Explanation", new JScrollPane(explanation));
         tabs.addTab("Truth table", new JScrollPane(truthTable));
 
@@ -112,6 +116,7 @@ public final class BuilderView extends JPanel {
         explanation.setCaretPosition(0);
         truthTable.setText(state.truthTableText());
         truthTable.setCaretPosition(0);
+        canvas.setCircuit(state.components(), state.wires());
     }
 
     private void setBusy(boolean building) {

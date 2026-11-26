@@ -1,6 +1,15 @@
 package app;
 
 import data_access.circ.LogisimCircuitParser;
+import data_access.circ.CircuitLayout;
+import data_access.circ.CircuitPortCollector;
+import data_access.circ.CircuitWireRouter;
+import data_access.circ.GateDepthCalculator;
+import data_access.circ.GateObstacleChecker;
+import data_access.circ.GatePortLocator;
+import data_access.circ.LogisimCircuitPreviewLayout;
+import data_access.circ.WirePathFinder;
+import data_access.circ.WireRoutingRules;
 import data_access.file.TableFileStore;
 import data_access.json.CircuitJsonCodec;
 import data_access.json.JsonSettingsStore;
@@ -149,10 +158,22 @@ public final class AppBuilder {
         return new TutorChatView(controller, viewModel);
     }
 
-    /** Creates the Builder tab using the shared AI client. */
+    /** Creates the Builder tab using the shared AI client and circuit preview layout. */
     private void addBuilderTab() {
         BuildCircuitViewModel viewModel = new BuildCircuitViewModel();
-        BuildCircuitPresenter presenter = new BuildCircuitPresenter(viewModel, tableFormat);
+
+        GatePortLocator gatePorts = new GatePortLocator();
+        CircuitLayout layout = new CircuitLayout(new GateDepthCalculator());
+        CircuitWireRouter router = new CircuitWireRouter(
+                new CircuitPortCollector(gatePorts),
+                new WirePathFinder(
+                        new WireRoutingRules(),
+                        new GateObstacleChecker(gatePorts)));
+
+        BuildCircuitPresenter presenter = new BuildCircuitPresenter(
+                viewModel,
+                tableFormat,
+                new LogisimCircuitPreviewLayout(layout, router));
 
         LlmDesignGenerator generator = new LlmDesignGenerator(
                 llmClient, new CircuitDesignPromptBuilder(), new CircuitJsonCodec());
