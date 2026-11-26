@@ -28,9 +28,9 @@ class GeminiClientTest {
     void sendsTheDocumentedRequest() throws LlmException {
         FakeHttpTransport transport = FakeHttpTransport.answering(200, OK);
 
-        new GeminiClient(transport, KEY, "gemini-2.5-flash-lite").complete(chat(true));
+        new GeminiClient(transport, KEY, "gemini-3.5-flash-lite").complete(chat(true));
 
-        assertEquals("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
+        assertEquals("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
                 transport.url);
         assertEquals(Map.of("x-goog-api-key", KEY), transport.headers);
         JSONObject body = new JSONObject(transport.body);
@@ -42,7 +42,7 @@ class GeminiClientTest {
         assertEquals("Why?", body.getJSONArray("contents").getJSONObject(2).getJSONArray("parts").getJSONObject(0)
                 .getString("text"));
         JSONObject config = body.getJSONObject("generationConfig");
-        assertEquals(0.3, config.getDouble("temperature"));
+        assertFalse(config.has("temperature"));
         assertEquals(GeminiClient.MIN_OUTPUT_TOKENS, config.getInt("maxOutputTokens"));
         assertEquals("application/json", config.getString("responseMimeType"));
         assertFalse(transport.body.contains(KEY));

@@ -1,9 +1,9 @@
 package interface_adapter.tutor_chat;
 
+import java.util.Objects;
+
 import use_case.tutor_chat.TutorChatOutputBoundary;
 import use_case.tutor_chat.TutorChatOutputData;
-
-import java.util.Objects;
 
 /** Turns the conversation into chat bubbles for {@link TutorChatState}. */
 public final class TutorChatPresenter implements TutorChatOutputBoundary {
@@ -19,9 +19,10 @@ public final class TutorChatPresenter implements TutorChatOutputBoundary {
 
     @Override
     public void prepareSuccessView(TutorChatOutputData outputData) {
-        TutorChatState state = new TutorChatState(viewModel.getState());
+        final TutorChatState state = new TutorChatState(viewModel.getState());
         state.setMessages(outputData.messages().stream()
-                .map(line -> new ChatBubble(line.fromStudent(), line.fromStudent() ? STUDENT : TUTOR, line.text()))
+                .map(line -> new ChatBubble(line.fromStudent(), line.fromStudent() ? STUDENT : TUTOR,
+                        line.text(), line.offline()))
                 .toList());
         state.setError("");
         viewModel.setState(state);
@@ -30,7 +31,7 @@ public final class TutorChatPresenter implements TutorChatOutputBoundary {
 
     @Override
     public void prepareFailView(String errorMessage) {
-        TutorChatState state = new TutorChatState(viewModel.getState());
+        final TutorChatState state = new TutorChatState(viewModel.getState());
         state.setError(errorMessage);
         viewModel.setState(state);
         viewModel.firePropertyChanged();

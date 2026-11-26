@@ -33,9 +33,12 @@ public final class AiSettingsView extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    static final String INTRO = "The tutor and the circuit builder use an AI provider. Both have free keys: Gemini at "
-            + "aistudio.google.com and Groq at console.groq.com. Keys are saved only on this computer, in "
-            + "data/settings.json. Without a key, the tutor still gives offline hints.";
+    static final String INTRO = "The tutor and the circuit builder use an AI provider. Get a key from Claude "
+            + "(recommended) at console.anthropic.com, Gemini at aistudio.google.com, or ChatGPT at "
+            + "platform.openai.com. Keys are saved only on this computer, in data/settings.json. "
+            + "Without a key, the tutor still gives offline hints.";
+
+    static final String RECOMMENDED_ID = "claude";
 
     private final transient AiSettingsController controller;
 
@@ -121,13 +124,18 @@ public final class AiSettingsView extends JPanel {
         firstProvider.removeAllItems();
         for (int i = 0; i < providers.size(); i++) {
             addKeyRow(providers.get(i), i);
-            firstProvider.addItem(providers.get(i).displayName());
+            firstProvider.addItem(label(providers.get(i)));
         }
         if (!providers.isEmpty()) {
             firstProvider.setSelectedIndex(0);
         }
         keyRows.revalidate();
         keyRows.repaint();
+    }
+
+    private static String label(ProviderRow provider) {
+        return RECOMMENDED_ID.equals(provider.id()) ? provider.displayName() + " (recommended)"
+                : provider.displayName();
     }
 
     private void addKeyRow(ProviderRow provider, int row) {
@@ -145,7 +153,7 @@ public final class AiSettingsView extends JPanel {
         c.insets = new Insets(4, 4, 4, 4);
         c.anchor = GridBagConstraints.WEST;
         c.gridx = 0;
-        JLabel label = new JLabel(provider.displayName() + " API key:");
+        JLabel label = new JLabel(label(provider) + " API key:");
         label.setLabelFor(field);
         keyRows.add(label, c);
         c.gridx = 1;

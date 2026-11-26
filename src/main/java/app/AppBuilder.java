@@ -47,6 +47,8 @@ import use_case.ai_settings.SettingsStorageException;
 import use_case.check_circuit.CheckCircuitInteractor;
 import use_case.import_circuit.ImportCircuitInteractor;
 import use_case.table_file.TableFileInteractor;
+import use_case.tutor_chat.FallbackTutorGateway;
+import use_case.tutor_chat.RuleBasedTutor;
 import use_case.tutor_chat.TutorChatInteractor;
 import use_case.tutor_chat.TutorGateway;
 import use_case.build_circuit.BuildCircuitInteractor;
@@ -138,8 +140,10 @@ public final class AppBuilder {
     /** Person 3: the tutor chat, shown on the right of the Workspace tab. */
     private TutorChatView tutorView() {
         TutorChatViewModel viewModel = new TutorChatViewModel();
-        TutorGateway tutor = new LlmTutorGateway(llmClient,
-                new TutorPromptBuilder(new CircuitDescriber(), new CircuitJsonCodec()));
+        TutorGateway tutor = new FallbackTutorGateway(
+                new LlmTutorGateway(llmClient,
+                        new TutorPromptBuilder(new CircuitDescriber(), new CircuitJsonCodec())),
+                new RuleBasedTutor());
         TutorChatController controller = new TutorChatController(
                 new TutorChatInteractor(session, tutor, new TutorChatPresenter(viewModel)));
         return new TutorChatView(controller, viewModel);

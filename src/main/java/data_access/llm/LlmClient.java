@@ -2,7 +2,7 @@ package data_access.llm;
 
 /**
  * Sends one request to an AI model and returns its reply text. Implementations are the provider
- * clients ({@link GeminiClient}, {@link GroqClient}) and decorators that add fallback, rate
+ * clients ({@link GeminiClient}, {@link ClaudeClient}, {@link OpenAiClient}) and decorators that add fallback, rate
  * limiting or settings reloading. Tests use {@code FakeLlmClient}.
  */
 public interface LlmClient {

@@ -6,6 +6,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JViewport;
@@ -16,6 +17,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -42,6 +44,11 @@ final class ChatBubbleList extends JPanel implements Scrollable {
     static final Color STUDENT_TEXT = new Color(12, 68, 124);
     static final Color TUTOR_FILL = new Color(241, 241, 244);
     static final Color TUTOR_TEXT = new Color(33, 33, 33);
+    static final Color OFFLINE_FILL = new Color(254, 243, 199);
+    static final Color OFFLINE_TEXT = new Color(120, 53, 15);
+    static final String OFFLINE_LABEL = "Offline";
+    static final String OFFLINE_TOOLTIP =
+            "The AI tutor could not be reached, so this hint comes from the built-in offline tutor.";
     private static final int SPACING = 6;
     private static final int SCROLL_STEP = 16;
 
@@ -66,20 +73,23 @@ final class ChatBubbleList extends JPanel implements Scrollable {
     void setMessages(List<ChatBubble> messages, String intro) {
         removeAll();
         if (messages.isEmpty()) {
-            addRow(new Bubble(intro, getBackground(), Styles.MUTED, this::maxBubbleWidth), false);
+            addRow(new Bubble(intro, getBackground(), Styles.MUTED, this::maxBubbleWidth), false, false);
         }
         for (ChatBubble message : messages) {
             boolean student = message.fromStudent();
-            Bubble bubble = new Bubble(message.text(), student ? STUDENT_FILL : TUTOR_FILL,
-                    student ? STUDENT_TEXT : TUTOR_TEXT, this::maxBubbleWidth);
-            bubble.getAccessibleContext().setAccessibleName(message.sender());
-            addRow(bubble, student);
+            boolean offline = message.offline();
+            Color fill = student ? STUDENT_FILL : offline ? OFFLINE_FILL : TUTOR_FILL;
+            Color text = student ? STUDENT_TEXT : offline ? OFFLINE_TEXT : TUTOR_TEXT;
+            Bubble bubble = new Bubble(message.text(), fill, text, this::maxBubbleWidth);
+            bubble.getAccessibleContext().setAccessibleName(
+                    offline ? message.sender() + " (" + OFFLINE_LABEL + ")" : message.sender());
+            addRow(bubble, student, offline);
         }
         revalidate();
         repaint();
     }
 
-    private void addRow(Bubble bubble, boolean onRight) {
+    private void addRow(Bubble bubble, boolean onRight, boolean offline) {
         if (getComponentCount() > 0) {
             add(Box.createVerticalStrut(SPACING));
         }
@@ -93,6 +103,9 @@ final class ChatBubbleList extends JPanel implements Scrollable {
         };
         row.setOpaque(false);
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
+        if (offline) {
+            row.add(new OfflineBadge(), BorderLayout.NORTH);
+        }
         row.add(bubble, onRight ? BorderLayout.EAST : BorderLayout.WEST);
         add(row);
     }
@@ -129,6 +142,30 @@ final class ChatBubbleList extends JPanel implements Scrollable {
     @Override
     public boolean getScrollableTracksViewportHeight() {
         return getParent() instanceof JViewport viewport && viewport.getHeight() > getPreferredSize().height;
+    }
+
+    /** The small "Offline" tag above a reply written by the offline tutor. */
+    static final class OfflineBadge extends JLabel {
+
+        private static final long serialVersionUID = 1L;
+        private static final float FONT_SIZE = 11f;
+
+        OfflineBadge() {
+            super(OFFLINE_LABEL);
+            setFont(getFont().deriveFont(Font.BOLD, FONT_SIZE));
+            setForeground(OFFLINE_TEXT);
+            setOpaque(true);
+            setBackground(OFFLINE_FILL);
+            setBorder(BorderFactory.createEmptyBorder(1, 6, 1, 6));
+            setHorizontalAlignment(SwingConstants.LEFT);
+            setToolTipText(OFFLINE_TOOLTIP);
+            getAccessibleContext().setAccessibleDescription(OFFLINE_TOOLTIP);
+        }
+
+        @Override
+        public Dimension getMaximumSize() {
+            return getPreferredSize();
+        }
     }
 
     /** One message: wrapped, selectable text on a rounded background. */
@@ -196,6 +233,17 @@ final class ChatBubbleList extends JPanel implements Scrollable {
             }
             super.paintComponent(graphics);
         }
+    }
+
+    /** @return the Offline badges in order, for tests */
+    List<OfflineBadge> offlineBadges() {
+        return Arrays.stream(getComponents())
+                .filter(JComponent.class::isInstance)
+                .map(component -> ((JComponent) component).getComponents())
+                .flatMap(Arrays::stream)
+                .filter(OfflineBadge.class::isInstance)
+                .map(OfflineBadge.class::cast)
+                .toList();
     }
 
     /** @return the bubbles in order, for tests */

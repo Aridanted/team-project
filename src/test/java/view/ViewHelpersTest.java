@@ -129,6 +129,26 @@ class ViewHelpersTest {
     }
 
     @Test
+    void offlineTutorRepliesGetAnOfflineBadge() {
+        ChatBubbleList list = new ChatBubbleList();
+        list.setSize(500, 400);
+        list.setMessages(List.of(
+                new ChatBubble(true, "You", "Hi"),
+                new ChatBubble(false, "Tutor", "Online reply"),
+                new ChatBubble(false, "Tutor", "Offline reply", true)), "intro");
+
+        assertEquals(1, list.offlineBadges().size());
+        assertEquals("Offline", list.offlineBadges().get(0).getText());
+        assertEquals(3, list.bubbles().size());
+    }
+
+    @Test
+    void transcriptMarksOfflineReplies() {
+        assertEquals("Tutor (offline): Check row 2.\n\n", TutorChatView.transcriptText(List.of(
+                new ChatBubble(false, "Tutor", "Check row 2.", true))));
+    }
+
+    @Test
     void bubblesFitShortTextAndWrapLongText() {
         ChatBubbleList list = new ChatBubbleList();
         list.setSize(500, 400);
