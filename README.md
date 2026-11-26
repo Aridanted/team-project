@@ -214,11 +214,11 @@ responses. Tests never call the network. Real calls with a key (no keys are stor
 |----------|---------------|----------------------------|-----------------|
 | Claude | `claude-haiku-5-5` | Passed | Passed: half-adder |
 | Gemini | `gemini-3.5-flash-lite` | Passed | Passed: half-adder |
-| ChatGPT | `gpt-4o-mini` | Blocked: no API credits | Blocked: no API credits |
+| ChatGPT | `gpt-4o-mini` | Passed | Passed: half-adder |
 
 On November 25, 2026, Arian successfully tested Settings connections and
-half-adder generation with Claude and Gemini. Both generated the correct
-Sum and Cout outputs for all four input combinations.
+half-adder generation with Claude, Gemini and OpenAI. All three generated
+the correct Sum and Cout outputs for all four input combinations.
 
 OpenAI testing could not be completed because the tester did not have
 paid OpenAI API access.
