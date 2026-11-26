@@ -229,8 +229,6 @@ On November 25, 2026, Arian successfully tested Settings connections and
 half-adder generation with Claude, Gemini and OpenAI. All three generated
 the correct Sum and Cout outputs for all four input combinations.
 
-OpenAI testing could not be completed because the tester did not have
-paid OpenAI API access.
 
 Claude Haiku 5.5 and Gemini 3.5 Flash-Lite do not take `temperature`, and both think before
 replying, so their clients never send `temperature` and always allow enough output tokens.
