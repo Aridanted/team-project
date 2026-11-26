@@ -36,12 +36,12 @@ class AiSettingsPresenterTest {
     @Test
     void settingsViewListsProvidersAndSaysWhenSaved() {
         var providers = List.of(
-                new ProviderSettings("groq", "Groq", "gsk"),
+                new ProviderSettings("chatgpt", "ChatGPT", "gsk"),
                 new ProviderSettings("gemini", "Gemini", ""));
         presenter.prepareSettingsView(new AiSettingsOutputData(providers, true));
 
         AiSettingsState state = viewModel.getState();
-        assertEquals(List.of(new ProviderRow("groq", "Groq", "gsk"), new ProviderRow("gemini", "Gemini", "")),
+        assertEquals(List.of(new ProviderRow("chatgpt", "ChatGPT", "gsk"), new ProviderRow("gemini", "Gemini", "")),
                 state.getProviders());
         assertEquals("Settings saved.", state.getStatus());
         assertEquals(1, events.size());
@@ -60,9 +60,9 @@ class AiSettingsPresenterTest {
         assertTrue(viewModel.getState().isConnected());
         assertEquals("Connected to Gemini.", viewModel.getState().getConnectionMessage());
 
-        presenter.prepareConnectionView(new ConnectionTestOutputData("Groq", ConnectionProblem.AUTH));
+        presenter.prepareConnectionView(new ConnectionTestOutputData("ChatGPT", ConnectionProblem.AUTH));
         assertFalse(viewModel.getState().isConnected());
-        assertEquals("Groq rejected the API key. Check that you copied all of it and that it is still active.",
+        assertEquals("ChatGPT rejected the API key. Check that you copied all of it and that it is still active.",
                 viewModel.getState().getConnectionMessage());
     }
 
@@ -107,10 +107,10 @@ class AiSettingsPresenterTest {
         });
 
         controller.load();
-        controller.save(List.of("groq"), Map.of("groq", "k"));
+        controller.save(List.of("chatgpt"), Map.of("chatgpt", "k"));
         controller.testConnection("gemini", "x");
 
-        assertEquals(List.of("load", new SaveAiSettingsInputData(List.of("groq"), Map.of("groq", "k")),
+        assertEquals(List.of("load", new SaveAiSettingsInputData(List.of("chatgpt"), Map.of("chatgpt", "k")),
                 new TestConnectionInputData("gemini", "x")), calls);
     }
 

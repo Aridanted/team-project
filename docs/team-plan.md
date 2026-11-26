@@ -99,7 +99,8 @@ own small interfaces (add `implements YourInterface` to it).
 
 ### 3.8 Alice's `ai-connect` work (merged in pull request #5)
 - Circuit JSON format (`entity.design`, `docs/circuit-json.md`) and `CircuitJsonCodec`.
-- LLM clients (Gemini, Groq) behind `LlmClient`, with decorator chain for fallback and rate limits.
+- LLM clients (Claude, Gemini, ChatGPT; Groq was replaced on 2026-11-24) behind `LlmClient`, with
+  decorator chain for fallback and rate limits.
 - AI settings use case, `JsonSettingsStore`, and the Settings tab.
 - `MainFrame` and shared view helpers (`Styles`, `OnEventThread`, `BackgroundTask`).
 - A basic Tutor tab: `use_case.tutor_chat`, `LlmTutorGateway`, `TutorPromptBuilder` and

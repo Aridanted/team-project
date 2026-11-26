@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Factory, settings reloading and the connection tester, with fake provider clients. */
 class LlmClientFactoryTest {
@@ -25,7 +26,7 @@ class LlmClientFactoryTest {
 
     private List<LlmProviderSpec> specs() {
         return List.of(spec(AiProvider.GEMINI, "GEMINI_API_KEY", "GEMINI_MODEL", "flash"),
-                spec(AiProvider.GROQ, "GROQ_API_KEY", "GROQ_MODEL", "llama"));
+                spec(AiProvider.CHATGPT, "OPENAI_API_KEY", "OPENAI_MODEL", "llama"));
     }
 
     private LlmProviderSpec spec(AiProvider provider, String keyVariable, String modelVariable, String model) {
@@ -55,23 +56,23 @@ class LlmClientFactoryTest {
 
     @Test
     void environmentKeysAreUsedWhenNothingIsSaved() throws LlmException {
-        Map<String, String> env = Map.of("GROQ_API_KEY", "gsk_env", "GEMINI_API_KEY", " ");
+        Map<String, String> env = Map.of("OPENAI_API_KEY", "gsk_env", "GEMINI_API_KEY", " ");
         LlmClientFactory factory = new LlmClientFactory(specs(), env);
 
-        assertEquals("groq:gsk_env:llama", factory.create(AiSettings.defaults()).complete(REQUEST));
+        assertEquals("chatgpt:gsk_env:llama", factory.create(AiSettings.defaults()).complete(REQUEST));
     }
 
     @Test
     void providersAreChainedInTheSavedOrder() throws LlmException {
         LlmClientFactory factory = new LlmClientFactory(specs(), Map.of());
-        AiSettings groqFirst = new AiSettings(List.of(AiProvider.GROQ),
-                Map.of(AiProvider.GEMINI, "g", AiProvider.GROQ, "q"));
+        AiSettings chatgptFirst = new AiSettings(List.of(AiProvider.CHATGPT),
+                Map.of(AiProvider.GEMINI, "g", AiProvider.CHATGPT, "q"));
 
-        LlmClient client = factory.create(groqFirst);
+        LlmClient client = factory.create(chatgptFirst);
 
         assertInstanceOf(FallbackLlmClient.class, client);
-        assertEquals("groq:q:llama", client.complete(REQUEST));
-        assertEquals(List.of("groq:q:llama", "gemini:g:flash"), built);
+        assertEquals("chatgpt:q:llama", client.complete(REQUEST));
+        assertEquals(List.of("chatgpt:q:llama", "gemini:g:flash"), built);
     }
 
     @Test
@@ -93,9 +94,14 @@ class LlmClientFactoryTest {
     void connectionTesterUsesOnlyTheGivenProviderAndKey() throws AiConnectionException {
         LlmClientFactory factory = new LlmClientFactory(specs(), Map.of("GEMINI_API_KEY", "env"));
 
-        new LlmConnectionTester(factory).test(AiProvider.GROQ, "typed");
+        new LlmConnectionTester(factory).test(AiProvider.CHATGPT, "typed");
 
-        assertEquals(List.of("groq:typed:llama"), built);
+        assertEquals(List.of("chatgpt:typed:llama"), built);
+    }
+
+    @Test
+    void connectionTestLeavesRoomForThinkingModels() {
+        assertTrue(LlmConnectionTester.TEST_REQUEST.maxOutputTokens() >= 1024);
     }
 
     @Test
@@ -118,6 +124,7 @@ class LlmClientFactoryTest {
                 Map.of());
 
         assertInstanceOf(GeminiClient.class, factory.createFor(AiProvider.GEMINI, "k"));
-        assertInstanceOf(GroqClient.class, factory.createFor(AiProvider.GROQ, "k"));
+        assertInstanceOf(OpenAiClient.class, factory.createFor(AiProvider.CHATGPT, "k"));
+        assertInstanceOf(ClaudeClient.class, factory.createFor(AiProvider.CLAUDE, "k"));
     }
 }

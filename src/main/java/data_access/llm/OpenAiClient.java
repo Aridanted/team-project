@@ -9,22 +9,22 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Groq via its OpenAI-compatible chat completions endpoint.
+ * ChatGPT (OpenAI) via its chat completions endpoint.
  *
  * <p>HTTP 401/403 mean {@link LlmException.Kind#AUTH}; 429 means {@code RATE_LIMIT}; 5xx and
  * transport failures mean {@code NETWORK}; a {@code content_filter} stop means {@code BLOCKED}.
  */
-public final class GroqClient implements LlmClient {
+public final class OpenAiClient implements LlmClient {
 
-    static final String ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
+    static final String ENDPOINT = "https://api.openai.com/v1/chat/completions";
 
-    private static final String NAME = "Groq";
+    private static final String NAME = "ChatGPT";
 
     private final HttpTransport transport;
     private final String apiKey;
     private final String model;
 
-    public GroqClient(HttpTransport transport, String apiKey, String model) {
+    public OpenAiClient(HttpTransport transport, String apiKey, String model) {
         this.transport = Objects.requireNonNull(transport, "transport");
         this.apiKey = Objects.requireNonNull(apiKey, "apiKey");
         this.model = Objects.requireNonNull(model, "model");
@@ -59,7 +59,7 @@ public final class GroqClient implements LlmClient {
                 .put("model", model)
                 .put("messages", messages)
                 .put("temperature", request.temperature())
-                .put("max_tokens", request.maxOutputTokens());
+                .put("max_completion_tokens", request.maxOutputTokens());
         if (request.expectJson()) {
             body.put("response_format", new JSONObject().put("type", "json_object"));
         }

@@ -23,8 +23,8 @@ class JsonSettingsStoreTest {
     @TempDir
     Path folder;
 
-    private static AiSettings groqFirst() {
-        return new AiSettings(List.of(AiProvider.GROQ), Map.of(AiProvider.GEMINI, "AIza-test", AiProvider.GROQ,
+    private static AiSettings chatgptFirst() {
+        return new AiSettings(List.of(AiProvider.CHATGPT), Map.of(AiProvider.GEMINI, "AIza-test", AiProvider.CHATGPT,
                 "gsk_test"));
     }
 
@@ -37,20 +37,20 @@ class JsonSettingsStoreTest {
     void savesAndLoadsAgain() throws SettingsStorageException {
         JsonSettingsStore store = new JsonSettingsStore(folder.resolve("data").resolve("settings.json"));
 
-        store.save(groqFirst());
+        store.save(chatgptFirst());
 
-        assertEquals(groqFirst(), new JsonSettingsStore(folder.resolve("data").resolve("settings.json")).load());
+        assertEquals(chatgptFirst(), new JsonSettingsStore(folder.resolve("data").resolve("settings.json")).load());
     }
 
     @Test
     void writesVersionedJsonAndLeavesNoTemporaryFiles() throws Exception {
         Path file = folder.resolve("settings.json");
-        new JsonSettingsStore(file).save(groqFirst());
+        new JsonSettingsStore(file).save(chatgptFirst());
         new JsonSettingsStore(file).save(AiSettings.defaults());
 
         JSONObject json = new JSONObject(Files.readString(file));
         assertEquals(1, json.getInt("version"));
-        assertEquals("gemini", json.getJSONArray("providerOrder").getString(0));
+        assertEquals("claude", json.getJSONArray("providerOrder").getString(0));
         assertTrue(json.getJSONObject("apiKeys").isEmpty());
         try (Stream<Path> files = Files.list(folder)) {
             assertEquals(List.of(file), files.toList());
@@ -79,13 +79,13 @@ class JsonSettingsStoreTest {
     @Test
     void unknownProvidersAreIgnored() throws Exception {
         Path file = folder.resolve("settings.json");
-        Files.writeString(file, "{\"version\": 1, \"providerOrder\": [\"openai\", \"groq\"],"
-                + " \"apiKeys\": {\"openai\": \"x\", \"groq\": \"gsk_1\"}}");
+        Files.writeString(file, "{\"version\": 1, \"providerOrder\": [\"mistral\", \"chatgpt\"],"
+                + " \"apiKeys\": {\"mistral\": \"x\", \"chatgpt\": \"gsk_1\"}}");
 
         AiSettings settings = new JsonSettingsStore(file).load();
 
-        assertEquals(List.of(AiProvider.GROQ, AiProvider.GEMINI), settings.providerOrder());
-        assertEquals(Map.of(AiProvider.GROQ, "gsk_1"), settings.apiKeys());
+        assertEquals(List.of(AiProvider.CHATGPT, AiProvider.CLAUDE, AiProvider.GEMINI), settings.providerOrder());
+        assertEquals(Map.of(AiProvider.CHATGPT, "gsk_1"), settings.apiKeys());
     }
 
     @Test
@@ -94,6 +94,6 @@ class JsonSettingsStoreTest {
         Files.writeString(blocker, "a file, not a folder");
 
         assertThrows(SettingsStorageException.class,
-                () -> new JsonSettingsStore(blocker.resolve("settings.json")).save(groqFirst()));
+                () -> new JsonSettingsStore(blocker.resolve("settings.json")).save(chatgptFirst()));
     }
 }

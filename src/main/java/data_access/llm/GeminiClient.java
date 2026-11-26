@@ -74,8 +74,8 @@ public final class GeminiClient implements LlmClient {
                     .put("parts", textParts(message.text())));
         }
         body.put("contents", contents);
+        // No temperature: Gemini 3.5 and later ignore it and future models reject it (HTTP 400).
         JSONObject config = new JSONObject()
-                .put("temperature", request.temperature())
                 .put("maxOutputTokens", Math.max(MIN_OUTPUT_TOKENS, request.maxOutputTokens()));
         if (request.expectJson()) {
             config.put("responseMimeType", "application/json");

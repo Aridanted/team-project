@@ -5,8 +5,9 @@ import java.util.Optional;
 
 /** An AI service LogiCoach can talk to. */
 public enum AiProvider {
+    CLAUDE("claude", "Claude"),
     GEMINI("gemini", "Gemini"),
-    GROQ("groq", "Groq");
+    CHATGPT("chatgpt", "ChatGPT");
 
     private final String id;
     private final String displayName;
