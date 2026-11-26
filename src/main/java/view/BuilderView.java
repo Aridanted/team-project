@@ -69,7 +69,6 @@ public final class BuilderView extends JPanel {
         setBorder(Styles.padding());
         add(requestPanel(), BorderLayout.NORTH);
         add(resultPanel(), BorderLayout.CENTER);
-        add(error, BorderLayout.SOUTH);
 
         buildButton.addActionListener(event -> build());
         saveButton.addActionListener(event -> save());
@@ -115,6 +114,7 @@ public final class BuilderView extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(Styles.GAP, Styles.GAP));
         panel.add(Styles.mutedLabel("For practice and learning"), BorderLayout.NORTH);
         panel.add(inputPanel, BorderLayout.CENTER);
+        panel.add(error, BorderLayout.SOUTH);
         return panel;
     }
 
