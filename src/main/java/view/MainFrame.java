@@ -28,4 +28,18 @@ public final class MainFrame extends JFrame {
     public void addTab(String title, JComponent content) {
         tabs.addTab(title, content);
     }
+
+    /**
+     * Selects an existing application tab.
+     *
+     * @param title the title of the tab to display
+     * @throws IllegalArgumentException if no tab has that title
+     */
+    public void showTab(String title) {
+        int index = tabs.indexOfTab(title);
+        if (index < 0) {
+            throw new IllegalArgumentException("Unknown tab: " + title);
+        }
+        tabs.setSelectedIndex(index);
+    }
 }

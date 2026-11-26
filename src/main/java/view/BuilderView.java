@@ -5,6 +5,8 @@ import interface_adapter.build_circuit.BuildCircuitState;
 import interface_adapter.build_circuit.BuildCircuitViewModel;
 import interface_adapter.save_built_circuit.SaveBuiltCircuitController;
 import interface_adapter.save_built_circuit.SaveBuiltCircuitViewModel;
+import interface_adapter.import_circuit.ImportCircuitViewModel;
+import interface_adapter.use_built_circuit.UseBuiltCircuitController;
 
 
 import javax.swing.JButton;
@@ -40,6 +42,8 @@ public final class BuilderView extends JPanel {
     private final JButton saveButton = new JButton("Save as .circ");
     private final JLabel saveMessage = Styles.mutedLabel("");
     private boolean hasBuiltCircuit;
+    private final transient UseBuiltCircuitController useController;
+    private final JButton useButton = new JButton("Use as current circuit");
 
     /**
      * Creates the Builder screen.
@@ -51,10 +55,14 @@ public final class BuilderView extends JPanel {
             BuildCircuitController controller,
             BuildCircuitViewModel viewModel,
             SaveBuiltCircuitController saveController,
-            SaveBuiltCircuitViewModel saveViewModel) {
+            SaveBuiltCircuitViewModel saveViewModel,
+            UseBuiltCircuitController useController,
+            ImportCircuitViewModel importViewModel) {
         super(new BorderLayout(Styles.GAP, Styles.GAP));
         this.controller = Objects.requireNonNull(controller, "controller");
         this.saveController = Objects.requireNonNull(saveController, "saveController");
+        this.useController = Objects.requireNonNull(useController, "useController");
+        Objects.requireNonNull(importViewModel, "importViewModel");
         Objects.requireNonNull(saveViewModel, "saveViewModel");
         Objects.requireNonNull(viewModel, "viewModel");
 
@@ -65,6 +73,15 @@ public final class BuilderView extends JPanel {
 
         buildButton.addActionListener(event -> build());
         saveButton.addActionListener(event -> save());
+
+        useButton.addActionListener(event -> useBuiltCircuit());
+
+        importViewModel.addPropertyChangeListener(OnEventThread.listener(event -> {
+            String message = importViewModel.getState().getError();
+            if (!message.isEmpty()) {
+                Styles.setMessage(error, message);
+            }
+        }));
 
         saveViewModel.addPropertyChangeListener(OnEventThread.listener(event -> {
             var state = saveViewModel.getState();
@@ -90,6 +107,7 @@ public final class BuilderView extends JPanel {
         JPanel controls = new JPanel(new FlowLayout(FlowLayout.LEFT, Styles.GAP, 0));
         controls.add(buildButton);
         controls.add(saveButton);
+        controls.add(useButton);
         controls.add(busy);
         controls.add(saveMessage);
         inputPanel.add(controls, BorderLayout.SOUTH);
@@ -147,13 +165,30 @@ public final class BuilderView extends JPanel {
         canvas.setCircuit(state.components(), state.wires());
         hasBuiltCircuit = !state.circuitName().isBlank();
         saveButton.setEnabled(hasBuiltCircuit && buildButton.isEnabled());
+        useButton.setEnabled(hasBuiltCircuit && buildButton.isEnabled());
     }
 
     private void setBusy(boolean working) {
         buildButton.setEnabled(!working);
         description.setEnabled(!working);
         saveButton.setEnabled(!working && hasBuiltCircuit);
+        useButton.setEnabled(!working && hasBuiltCircuit);
         Styles.setMessage(busy, working ? "Working..." : "");
+    }
+
+    private void useBuiltCircuit() {
+        if (!useButton.isEnabled()) {
+            return;
+        }
+
+        Styles.setMessage(error, "");
+        Styles.setMessage(saveMessage, "");
+        setBusy(true);
+
+        BackgroundTask.run(
+                () -> useController.useBuiltCircuit(),
+                () -> setBusy(false),
+                message -> Styles.setMessage(error, message));
     }
 
     private void save() {

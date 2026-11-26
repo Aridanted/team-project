@@ -57,6 +57,7 @@ import interface_adapter.build_circuit.BuildCircuitViewModel;
 import interface_adapter.save_built_circuit.SaveBuiltCircuitController;
 import interface_adapter.save_built_circuit.SaveBuiltCircuitPresenter;
 import interface_adapter.save_built_circuit.SaveBuiltCircuitViewModel;
+import interface_adapter.use_built_circuit.UseBuiltCircuitController;
 import use_case.ai_settings.AiSettingsInteractor;
 import use_case.ai_settings.SettingsStorageException;
 import use_case.check_circuit.CheckCircuitInteractor;
@@ -71,6 +72,7 @@ import use_case.build_circuit.DesignAssembler;
 import use_case.build_circuit.DesignValidator;
 import use_case.build_circuit.OutputExpressionVerifier;
 import use_case.save_built_circuit.SaveBuiltCircuitInteractor;
+import use_case.use_built_circuit.UseBuiltCircuitInteractor;
 import view.AiSettingsView;
 import view.CircuitView;
 import view.MainFrame;
@@ -99,6 +101,7 @@ public final class AppBuilder {
     private final MainFrame frame = new MainFrame();
     private final InMemorySessionStore session = new InMemorySessionStore();
     private final InMemoryBuiltCircuitStore builtCircuits = new InMemoryBuiltCircuitStore();
+    private final ImportCircuitViewModel importViewModel = new ImportCircuitViewModel();
     private final TruthTableTextFormat tableFormat = new TruthTableTextFormat();
     private final JsonSettingsStore settingsStore;
     private final LlmClientFactory llmClientFactory;
@@ -124,7 +127,6 @@ public final class AppBuilder {
 
     /** The circuit, its expected truth table and the tutor side by side (DD-14). */
     private void addWorkspaceTab() {
-        ImportCircuitViewModel importViewModel = new ImportCircuitViewModel();
         ImportCircuitController importController = new ImportCircuitController(new ImportCircuitInteractor(
                 new LogisimCircuitParser(), session, new ImportCircuitPresenter(importViewModel)));
 
@@ -146,7 +148,9 @@ public final class AppBuilder {
             if (state.getError().isEmpty()) {
                 tableView.clearResults();
                 if (state.isLoaded()) {
-                    tableView.offerTemplate(SpecTemplate.forLabels(state.getInputLabels(), state.getOutputLabels()));
+                    tableView.offerTemplate(
+                            SpecTemplate.forLabels(state.getInputLabels(), state.getOutputLabels()));
+                    frame.showTab("Workspace");
                 }
             }
         }));
@@ -197,16 +201,43 @@ public final class AppBuilder {
 
         BuildCircuitController controller = new BuildCircuitController(interactor);
         SaveBuiltCircuitViewModel saveViewModel = new SaveBuiltCircuitViewModel();
-        SaveBuiltCircuitController saveController = new SaveBuiltCircuitController(
+        SaveBuiltCircuitController saveController = saveController(layout, router, saveViewModel);
+
+        UseBuiltCircuitController useController = new UseBuiltCircuitController(
+                new UseBuiltCircuitInteractor(
+                        builtCircuits,
+                        new LogisimCircuitPreviewLayout(layout, router),
+                        session,
+                        new ImportCircuitPresenter(importViewModel)));
+
+        frame.addTab("Builder", new BuilderView(
+                controller,
+                viewModel,
+                saveController,
+                saveViewModel,
+                useController,
+                importViewModel));
+    }
+
+    /**
+     * Creates the controller for saving and verifying built circuits.
+     *
+     * @param layout the component layout
+     * @param router the wire router
+     * @param viewModel the save-result view model
+     * @return the configured save controller
+     */
+    private SaveBuiltCircuitController saveController(
+            CircuitLayout layout,
+            CircuitWireRouter router,
+            SaveBuiltCircuitViewModel viewModel) {
+        return new SaveBuiltCircuitController(
                 new SaveBuiltCircuitInteractor(
                         builtCircuits,
                         new LogisimCircuitWriter(layout, router, new CircuitXmlEncoder()),
                         new LogisimCircuitParser(),
                         new TruthTableGenerator(new CircuitSimulator()),
-                        new SaveBuiltCircuitPresenter(saveViewModel)));
-
-        frame.addTab("Builder", new BuilderView(
-                controller, viewModel, saveController, saveViewModel));
+                        new SaveBuiltCircuitPresenter(viewModel)));
     }
 
     private void addSettingsTab() {
