@@ -157,7 +157,13 @@ public final class CircuitCanvas extends JComponent {
     /** The body of a gate sits behind its output point, which is the component's location. */
     private static Rectangle body(DrawableComponent component) {
         boolean unary = "NOT".equals(component.detail()) || "BUFFER".equals(component.detail());
-        int length = unary ? UNARY_LENGTH : GATE_LENGTH;
+        int length = switch (component.detail()) {
+            case "NOT" -> UNARY_LENGTH;
+            case "BUFFER" -> 20;
+            case "NAND", "NOR", "XOR", "XOR_ONE" -> GATE_LENGTH + 10;
+            case "XNOR", "XNOR_ONE" -> GATE_LENGTH + 20;
+            default -> GATE_LENGTH;
+        };
         int width = unary ? UNARY_WIDTH : GATE_WIDTH;
         int x = component.x();
         int y = component.y();

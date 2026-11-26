@@ -6,6 +6,8 @@ import entity.simulation.NotSimulatableException;
 import entity.truthtable.TruthTable;
 import entity.truthtable.TruthTableGenerator;
 
+import java.util.Optional;
+
 /** Builds and verifies a circuit from a student's description. */
 public final class BuildCircuitInteractor implements BuildCircuitInputBoundary {
     private static final int MAX_DESCRIPTION_LENGTH = 500;
@@ -17,9 +19,10 @@ public final class BuildCircuitInteractor implements BuildCircuitInputBoundary {
     private final TruthTableGenerator truthTableGenerator;
     private final OutputExpressionVerifier expressionVerifier;
     private final BuildCircuitOutputBoundary presenter;
+    private final Optional<BuiltCircuitDataAccessInterface> builtCircuits;
 
     /**
-     * Creates the build use case with its generator, verification steps, and presenter.
+     * Creates the build use case without retaining its result.
      *
      * @param generator the source of candidate designs
      * @param validator the circuit design validator
@@ -28,16 +31,43 @@ public final class BuildCircuitInteractor implements BuildCircuitInputBoundary {
      * @param expressionVerifier the checker for supplied output expressions
      * @param presenter the receiver of the build outcome
      */
-    public BuildCircuitInteractor(CircuitDesignGenerator generator, DesignValidator validator,
-                                  DesignAssembler assembler, TruthTableGenerator truthTableGenerator,
-                                  OutputExpressionVerifier expressionVerifier,
-                                  BuildCircuitOutputBoundary presenter) {
+    public BuildCircuitInteractor(
+            CircuitDesignGenerator generator,
+            DesignValidator validator,
+            DesignAssembler assembler,
+            TruthTableGenerator truthTableGenerator,
+            OutputExpressionVerifier expressionVerifier,
+            BuildCircuitOutputBoundary presenter) {
+        this(generator, validator, assembler, truthTableGenerator,
+                expressionVerifier, presenter, null);
+    }
+
+    /**
+     * Creates the build use case with optional storage for successful results.
+     *
+     * @param generator the source of candidate designs
+     * @param validator the circuit design validator
+     * @param assembler the converter from design to circuit
+     * @param truthTableGenerator the simulator-backed truth table generator
+     * @param expressionVerifier the checker for supplied output expressions
+     * @param presenter the receiver of the build outcome
+     * @param builtCircuits the result store, or null to disable retention
+     */
+    public BuildCircuitInteractor(
+            CircuitDesignGenerator generator,
+            DesignValidator validator,
+            DesignAssembler assembler,
+            TruthTableGenerator truthTableGenerator,
+            OutputExpressionVerifier expressionVerifier,
+            BuildCircuitOutputBoundary presenter,
+            BuiltCircuitDataAccessInterface builtCircuits) {
         this.generator = generator;
         this.validator = validator;
         this.assembler = assembler;
         this.truthTableGenerator = truthTableGenerator;
         this.expressionVerifier = expressionVerifier;
         this.presenter = presenter;
+        this.builtCircuits = Optional.ofNullable(builtCircuits);
     }
 
     @Override
@@ -65,6 +95,7 @@ public final class BuildCircuitInteractor implements BuildCircuitInputBoundary {
                 }
                 continue;
             }
+            builtCircuits.ifPresent(store -> store.setBuiltCircuit(result.circuit()));
             presenter.prepareSuccessView(result);
             return;
         }

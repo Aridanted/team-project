@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import use_case.build_circuit.BuildCircuitInputData;
 import use_case.build_circuit.BuildCircuitOutputData;
 import use_case.build_circuit.DesignAssembler;
+import interface_adapter.import_circuit.DrawableComponent;
 
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
@@ -38,7 +39,14 @@ class BuildCircuitAdaptersTest {
         presenter.prepareSuccessView(passThroughResult());
 
         BuildCircuitState expected = new BuildCircuitState(
-                "Pass through", "inputs: A\noutputs: Y\n0 | 0\n1 | 1\n", "");
+                "Pass through",
+                "inputs: A\noutputs: Y\n0 | 0\n1 | 1\n",
+                "",
+                "",
+                List.of(
+                        new DrawableComponent("input", "", "A", 0, 0, "east"),
+                        new DrawableComponent("output", "", "Y", 0, 0, "east")),
+                List.of());
         assertEquals(expected, viewModel.getState());
         assertEquals(1, events.size());
         assertEquals("state", events.getFirst().getPropertyName());

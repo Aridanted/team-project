@@ -114,7 +114,7 @@ in Logisim, so that I can study how it is built.
 - The AI is unavailable: an offline tutor gives rule-based hints, and an "Offline" badge shows.
 - No circuit is open: the tutor answers general digital logic questions.
 
-### Use Case 6: Build a circuit from a description (Arian, draft)
+### Use Case 6: Build a circuit from a description (Arian)
 **Main flow**
 1. The student describes a circuit in plain English.
 2. The app shows the generated circuit, its truth table, and a short explanation.
@@ -138,6 +138,16 @@ ports, and exports a `.circ` file. Round-trip tests reload the exported circuit
 and compare its truth table with the original. Exported files include the
 toolbar tools needed to interact with the circuit in Logisim-evolution.
 
+The Swing Builder tab accepts a description and builds the circuit in the
+background. It displays a circuit preview, an explanation, and the simulated
+truth table.
+
+"Save as .circ" exports the built circuit, reloads the file, and compares its
+complete truth table with the original before reporting success.
+
+"Use as current circuit" loads the built circuit into Workspace for checking
+and tutor discussion.
+
 ---
 
 ## Minimal Viable Product (MVP)
@@ -147,8 +157,7 @@ toolbar tools needed to interact with the circuit in Logisim-evolution.
 | Aryan | Use Cases 1, 2 and 3: open, check, save and load | Done |
 | Alice | Use Case 4: AI connection | Done (pull request #5) |
 | Ivy | Use Case 5: tutor chat | Basic AI chat merged in #5; hint buttons, safety filter and offline tutor still to do |
-| Arian | Use Case 6: build from a description | Core build use case implemented. AI generation, the Builder UI, and Logisim export are tracked separately. |
-
+| Arian | Use Case 6: build from a description | Implemented in PR #27: Builder UI, circuit preview, verified Logisim export, and transfer to Workspace. |
 ---
 
 ## Entities
@@ -212,9 +221,14 @@ responses. Tests never call the network. Real calls with a key (no keys are stor
 
 | Provider | Default model | Settings "Test connection" | Builder request |
 |----------|---------------|----------------------------|-----------------|
-| Claude | `claude-haiku-5-5` | Not tested yet | Not tested yet |
-| Gemini | `gemini-3.5-flash-lite` | Not tested yet | Not tested yet |
-| ChatGPT | `gpt-4o-mini` | Not tested yet | Not tested yet |
+| Claude | `claude-haiku-5-5` | Passed | Passed: half-adder |
+| Gemini | `gemini-3.5-flash-lite` | Passed | Passed: half-adder |
+| ChatGPT | `gpt-4o-mini` | Passed | Passed: half-adder |
+
+On November 25, 2026, Arian successfully tested Settings connections and
+half-adder generation with Claude, Gemini and OpenAI. All three generated
+the correct Sum and Cout outputs for all four input combinations.
+
 
 Claude Haiku 5.5 and Gemini 3.5 Flash-Lite do not take `temperature`, and both think before
 replying, so their clients never send `temperature` and always allow enough output tokens.
