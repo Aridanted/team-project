@@ -212,9 +212,16 @@ responses. Tests never call the network. Real calls with a key (no keys are stor
 
 | Provider | Default model | Settings "Test connection" | Builder request |
 |----------|---------------|----------------------------|-----------------|
-| Claude | `claude-haiku-5-5` | Not tested yet | Not tested yet |
-| Gemini | `gemini-3.5-flash-lite` | Not tested yet | Not tested yet |
-| ChatGPT | `gpt-4o-mini` | Not tested yet | Not tested yet |
+| Claude | `claude-haiku-5-5` | Passed | Passed: half-adder |
+| Gemini | `gemini-3.5-flash-lite` | Passed | Passed: half-adder |
+| ChatGPT | `gpt-4o-mini` | Blocked: no API credits | Blocked: no API credits |
+
+On November 25, 2026, Arian successfully tested Settings connections and
+half-adder generation with Claude and Gemini. Both generated the correct
+Sum and Cout outputs for all four input combinations.
+
+OpenAI testing could not be completed because the tester did not have
+paid OpenAI API access.
 
 Claude Haiku 5.5 and Gemini 3.5 Flash-Lite do not take `temperature`, and both think before
 replying, so their clients never send `temperature` and always allow enough output tokens.
