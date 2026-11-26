@@ -3,6 +3,9 @@ package view;
 import interface_adapter.build_circuit.BuildCircuitController;
 import interface_adapter.build_circuit.BuildCircuitState;
 import interface_adapter.build_circuit.BuildCircuitViewModel;
+import interface_adapter.save_built_circuit.SaveBuiltCircuitController;
+import interface_adapter.save_built_circuit.SaveBuiltCircuitViewModel;
+
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -10,6 +13,11 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.File;
+import java.util.Locale;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.util.Objects;
@@ -28,6 +36,10 @@ public final class BuilderView extends JPanel {
     private final JTextArea explanation = new JTextArea(6, 40);
     private final JTextArea truthTable = new JTextArea(12, 40);
     private final CircuitCanvas canvas = new CircuitCanvas();
+    private final transient SaveBuiltCircuitController saveController;
+    private final JButton saveButton = new JButton("Save as .circ");
+    private final JLabel saveMessage = Styles.mutedLabel("");
+    private boolean hasBuiltCircuit;
 
     /**
      * Creates the Builder screen.
@@ -35,9 +47,15 @@ public final class BuilderView extends JPanel {
      * @param controller the controller that submits build requests
      * @param viewModel the source of build results
      */
-    public BuilderView(BuildCircuitController controller, BuildCircuitViewModel viewModel) {
+    public BuilderView(
+            BuildCircuitController controller,
+            BuildCircuitViewModel viewModel,
+            SaveBuiltCircuitController saveController,
+            SaveBuiltCircuitViewModel saveViewModel) {
         super(new BorderLayout(Styles.GAP, Styles.GAP));
         this.controller = Objects.requireNonNull(controller, "controller");
+        this.saveController = Objects.requireNonNull(saveController, "saveController");
+        Objects.requireNonNull(saveViewModel, "saveViewModel");
         Objects.requireNonNull(viewModel, "viewModel");
 
         setBorder(Styles.padding());
@@ -46,6 +64,13 @@ public final class BuilderView extends JPanel {
         add(error, BorderLayout.SOUTH);
 
         buildButton.addActionListener(event -> build());
+        saveButton.addActionListener(event -> save());
+
+        saveViewModel.addPropertyChangeListener(OnEventThread.listener(event -> {
+            var state = saveViewModel.getState();
+            Styles.setMessage(saveMessage, state.message());
+            Styles.setMessage(error, state.error());
+        }));
         viewModel.addPropertyChangeListener(OnEventThread.listener(
                 event -> display((BuildCircuitState) event.getNewValue())));
         display(viewModel.getState());
@@ -64,7 +89,9 @@ public final class BuilderView extends JPanel {
 
         JPanel controls = new JPanel(new FlowLayout(FlowLayout.LEFT, Styles.GAP, 0));
         controls.add(buildButton);
+        controls.add(saveButton);
         controls.add(busy);
+        controls.add(saveMessage);
         inputPanel.add(controls, BorderLayout.SOUTH);
 
         JPanel panel = new JPanel(new BorderLayout(Styles.GAP, Styles.GAP));
@@ -102,6 +129,7 @@ public final class BuilderView extends JPanel {
         String request = description.getText();
         Styles.setMessage(error, "");
         setBusy(true);
+        Styles.setMessage(saveMessage, "");
 
         BackgroundTask.run(
                 () -> controller.build(request),
@@ -117,11 +145,57 @@ public final class BuilderView extends JPanel {
         truthTable.setText(state.truthTableText());
         truthTable.setCaretPosition(0);
         canvas.setCircuit(state.components(), state.wires());
+        hasBuiltCircuit = !state.circuitName().isBlank();
+        saveButton.setEnabled(hasBuiltCircuit && buildButton.isEnabled());
     }
 
-    private void setBusy(boolean building) {
-        buildButton.setEnabled(!building);
-        description.setEnabled(!building);
-        Styles.setMessage(busy, building ? "Building circuit..." : "");
+    private void setBusy(boolean working) {
+        buildButton.setEnabled(!working);
+        description.setEnabled(!working);
+        saveButton.setEnabled(!working && hasBuiltCircuit);
+        Styles.setMessage(busy, working ? "Working..." : "");
+    }
+
+    private void save() {
+        if (!saveButton.isEnabled()) {
+            return;
+        }
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Save built circuit");
+        chooser.setFileFilter(new FileNameExtensionFilter(
+                "Logisim circuits (*.circ)", "circ"));
+        chooser.setSelectedFile(new File("built-circuit.circ"));
+
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File target = chooser.getSelectedFile();
+        if (!target.getName().toLowerCase(Locale.ROOT).endsWith(".circ")) {
+            target = new File(target.getParentFile(), target.getName() + ".circ");
+        }
+
+        if (target.exists()) {
+            int answer = JOptionPane.showConfirmDialog(
+                    this,
+                    "Replace " + target.getName() + "?",
+                    "Confirm replacement",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+            if (answer != JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
+
+        String path = target.getAbsolutePath();
+        Styles.setMessage(error, "");
+        Styles.setMessage(saveMessage, "");
+        setBusy(true);
+
+        BackgroundTask.run(
+                () -> saveController.save(path),
+                () -> setBusy(false),
+                message -> Styles.setMessage(error, message));
     }
 }

@@ -10,6 +10,8 @@ import data_access.circ.GatePortLocator;
 import data_access.circ.LogisimCircuitPreviewLayout;
 import data_access.circ.WirePathFinder;
 import data_access.circ.WireRoutingRules;
+import data_access.circ.CircuitXmlEncoder;
+import data_access.circ.LogisimCircuitWriter;
 import data_access.file.TableFileStore;
 import data_access.json.CircuitJsonCodec;
 import data_access.json.JsonSettingsStore;
@@ -25,6 +27,7 @@ import data_access.llm.tutor.TutorPromptBuilder;
 import data_access.session.InMemorySessionStore;
 import data_access.llm.builder.CircuitDesignPromptBuilder;
 import data_access.llm.builder.LlmDesignGenerator;
+import data_access.session.InMemoryBuiltCircuitStore;
 import entity.design.CircuitDescriber;
 import entity.settings.AiSettings;
 import entity.simulation.CircuitSimulator;
@@ -51,6 +54,9 @@ import interface_adapter.tutor_chat.TutorChatViewModel;
 import interface_adapter.build_circuit.BuildCircuitController;
 import interface_adapter.build_circuit.BuildCircuitPresenter;
 import interface_adapter.build_circuit.BuildCircuitViewModel;
+import interface_adapter.save_built_circuit.SaveBuiltCircuitController;
+import interface_adapter.save_built_circuit.SaveBuiltCircuitPresenter;
+import interface_adapter.save_built_circuit.SaveBuiltCircuitViewModel;
 import use_case.ai_settings.AiSettingsInteractor;
 import use_case.ai_settings.SettingsStorageException;
 import use_case.check_circuit.CheckCircuitInteractor;
@@ -64,6 +70,7 @@ import use_case.build_circuit.BuildCircuitInteractor;
 import use_case.build_circuit.DesignAssembler;
 import use_case.build_circuit.DesignValidator;
 import use_case.build_circuit.OutputExpressionVerifier;
+import use_case.save_built_circuit.SaveBuiltCircuitInteractor;
 import view.AiSettingsView;
 import view.CircuitView;
 import view.MainFrame;
@@ -91,6 +98,7 @@ public final class AppBuilder {
     private final Map<String, String> environment;
     private final MainFrame frame = new MainFrame();
     private final InMemorySessionStore session = new InMemorySessionStore();
+    private final InMemoryBuiltCircuitStore builtCircuits = new InMemoryBuiltCircuitStore();
     private final TruthTableTextFormat tableFormat = new TruthTableTextFormat();
     private final JsonSettingsStore settingsStore;
     private final LlmClientFactory llmClientFactory;
@@ -184,10 +192,21 @@ public final class AppBuilder {
                 new DesignAssembler(),
                 new TruthTableGenerator(new CircuitSimulator()),
                 new OutputExpressionVerifier(new ExpressionParser()),
-                presenter);
+                presenter,
+                builtCircuits);
 
         BuildCircuitController controller = new BuildCircuitController(interactor);
-        frame.addTab("Builder", new BuilderView(controller, viewModel));
+        SaveBuiltCircuitViewModel saveViewModel = new SaveBuiltCircuitViewModel();
+        SaveBuiltCircuitController saveController = new SaveBuiltCircuitController(
+                new SaveBuiltCircuitInteractor(
+                        builtCircuits,
+                        new LogisimCircuitWriter(layout, router, new CircuitXmlEncoder()),
+                        new LogisimCircuitParser(),
+                        new TruthTableGenerator(new CircuitSimulator()),
+                        new SaveBuiltCircuitPresenter(saveViewModel)));
+
+        frame.addTab("Builder", new BuilderView(
+                controller, viewModel, saveController, saveViewModel));
     }
 
     private void addSettingsTab() {
